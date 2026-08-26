@@ -43,6 +43,7 @@ Build a modern, premium, highly interactive personalized weather web application
 - Added persisted visual theme presets: Warm Editorial, Clean IMD, and Midnight Weather.
 - Upgraded the heavy rain warning into a full-bleed editorial alert treatment for faster scanning.
 - Added a key-free, Google Maps-style location typeahead with worldwide/Indian directory entries, instant selection, saved locations, local persistence, and a mobile-friendly search modal.
+- Fixed Rajahmundry search by adding both Rajahmundry and its official Rajamahendravaram naming variant to the directory.
 - Verified lint, production build, desktop onboarding/dashboard screenshot, and mobile interaction flow.
 
 ## Prioritized backlog
