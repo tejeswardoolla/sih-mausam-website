@@ -47,6 +47,8 @@ Build a modern, premium, highly interactive personalized weather web application
 - Expanded the key-free directory with Godavari-region cities, towns, mandals, coastal delta locations, and agency-area destinations including Kakinada, Amalapuram, Maredumilli, Polavaram, Bhimavaram, and Narasapur.
 - Fixed active-location synchronization so a selected place now updates the top location control, hero weather heading, weather map label, saved-place highlight, and persists after refresh.
 - Restyled the active editorial preset into a storm-glass weather interface with atmospheric field imagery, translucent panels, teal weather tones, and a floating rotating glass globe in the hero.
+- Added condition-driven demo atmosphere: drifting clouds, subtle rain streaks, timed lightning pulses, and a pulsing globe halo around the rotating Earth.
+- Fixed storm-theme mobile navigation contrast and viewport positioning, plus mobile anchor navigation content shifting.
 - Verified lint, production build, desktop onboarding/dashboard screenshot, and mobile interaction flow.
 
 ## Prioritized backlog
