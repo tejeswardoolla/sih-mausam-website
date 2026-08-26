@@ -44,6 +44,7 @@ Build a modern, premium, highly interactive personalized weather web application
 - Upgraded the heavy rain warning into a full-bleed editorial alert treatment for faster scanning.
 - Added a key-free, Google Maps-style location typeahead with worldwide/Indian directory entries, instant selection, saved locations, local persistence, and a mobile-friendly search modal.
 - Fixed Rajahmundry search by adding both Rajahmundry and its official Rajamahendravaram naming variant to the directory.
+- Expanded the key-free directory with Godavari-region cities, towns, mandals, coastal delta locations, and agency-area destinations including Kakinada, Amalapuram, Maredumilli, Polavaram, Bhimavaram, and Narasapur.
 - Verified lint, production build, desktop onboarding/dashboard screenshot, and mobile interaction flow.
 
 ## Prioritized backlog
