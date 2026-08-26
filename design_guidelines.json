@@ -1,0 +1,53 @@
+{
+  "app_name": "Mausam - India Meteorological Department & Ministry of Earth Sciences Weather Intelligence",
+  "archetype": "ARCHETYPE 4: SWISS & HIGH-CONTRAST (Authority, Clarity, Truth) combined with clean modern Indian governmental intelligence UI",
+  "typography": {
+    "headings": "Plus Jakarta Sans, Outfit, sans-serif",
+    "body": "Inter, system-ui, sans-serif",
+    "mono": "JetBrains Mono, monospace"
+  },
+  "colors": {
+    "primary": "#0052CC",
+    "primary_dark": "#0747A6",
+    "accent": "#FF6B00",
+    "success": "#00875A",
+    "warning": "#FFAB00",
+    "danger": "#DE350B",
+    "background_light": "#F8FAFC",
+    "background_dark": "#0F172A",
+    "surface_light": "#FFFFFF",
+    "surface_dark": "#1E293B"
+  },
+  "visual_enhancers": {
+    "glassmorphism": "backdrop-blur-xl bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800",
+    "shadows": "shadow-lg shadow-slate-200/50 dark:shadow-none",
+    "radius": "rounded-2xl"
+  },
+  "components": [
+    "Navbar with IMD emblem, location picker, persona quick switcher, notification center, dark mode toggle",
+    "Onboarding modal with persona selection & skip option",
+    "Hero Weather Card with live meteorological stats (AQI, UV, Humidity, Wind, Pressure, Sunrise/Sunset)",
+    "Persona-Specific Dynamic Intelligence Modules (Outdoor Fitness, Health, Beach/Surfer, Traveler, Parent/Family, Agriculture, Commuter, Event Planner)",
+    "Hourly Forecast 24-hour ticker with probability of precipitation",
+    "7-Day Extended Forecast with meteorological weather icons and temperature bars",
+    "Interactive Weather Radar & Map simulation with layer toggles (Precipitation, Wind Stream, Satellite, Temperature, Severe Alerts)",
+    "Alert Center with severity badge filters (Orange/Red/Yellow IMD warnings)",
+    "Saved Locations Manager with quick switching and weather comparisons",
+    "Dashboard Customization drawer/modal to reorder or toggle modules",
+    "Notification Center for severe weather and persona advisories",
+    "Profile & Preferences modal"
+  ],
+  "image_urls": {
+    "hero_sky": "https://images.unsplash.com/photo-1615286628718-4a4c8924d0eb",
+    "radar_map": "https://images.unsplash.com/photo-1630260655695-cabd562b720a",
+    "weather_station": "https://images.pexels.com/photos/28966577/pexels-photo-28966577.jpeg",
+    "sunny_clouds": "https://images.unsplash.com/photo-1599209248411-5124adbb1da2"
+  },
+  "universal_guidelines": [
+    "Every interactive element must include data-testid attributes",
+    "Default persona is Outdoor Fitness",
+    "Start light theme with dark mode toggle",
+    "Remember selected persona locally",
+    "Ensure smooth animated transitions when switching personas"
+  ]
+}
