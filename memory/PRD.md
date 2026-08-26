@@ -40,6 +40,8 @@ Build a modern, premium, highly interactive personalized weather web application
 - Added working header navigation, location switching, notification panel, profile preferences panel, customization persistence, dark mode, and mobile navigation.
 - Added responsive styling, atmospheric weather motion, hover transitions, glassy header treatment, and high-contrast IMD-inspired visual language.
 - Updated the visual theme to a bold orange-red editorial style inspired by the supplied creative-director reference, while preserving all dashboard content and interactions.
+- Added persisted visual theme presets: Warm Editorial, Clean IMD, and Midnight Weather.
+- Upgraded the heavy rain warning into a full-bleed editorial alert treatment for faster scanning.
 - Verified lint, production build, desktop onboarding/dashboard screenshot, and mobile interaction flow.
 
 ## Prioritized backlog
