@@ -42,6 +42,7 @@ Build a modern, premium, highly interactive personalized weather web application
 - Updated the visual theme to a bold orange-red editorial style inspired by the supplied creative-director reference, while preserving all dashboard content and interactions.
 - Added persisted visual theme presets: Warm Editorial, Clean IMD, and Midnight Weather.
 - Upgraded the heavy rain warning into a full-bleed editorial alert treatment for faster scanning.
+- Added a key-free, Google Maps-style location typeahead with worldwide/Indian directory entries, instant selection, saved locations, local persistence, and a mobile-friendly search modal.
 - Verified lint, production build, desktop onboarding/dashboard screenshot, and mobile interaction flow.
 
 ## Prioritized backlog
@@ -49,6 +50,7 @@ Build a modern, premium, highly interactive personalized weather web application
 - P1: Persist user profiles, saved locations, and dashboard order through the FastAPI/MongoDB service.
 - P1: Add real route weather and traffic data for commuter mode.
 - P2: Add detailed alert drawers, destination search, and richer map interactions.
+- P1: Connect the location typeahead to Google Places Autocomplete after a restricted Google Maps API key is provided.
 
 ## Remaining next tasks
 - Replace local weather fixtures with API adapters while preserving the current component data contracts.
