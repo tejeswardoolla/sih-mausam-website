@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="6" time="1.347" timestamp="2026-08-29T09:23:10.537997+00:00" hostname="agent-env-d0fb7155-248e-46d1-a631-eadd4f91d379"><testcase classname="tests.test_status_api" name="test_status_create_and_list_persisted_record" time="0.174" /><testcase classname="tests.test_weather_api" name="test_hyderabad_geocoding_returns_indian_result" time="0.264" /><testcase classname="tests.test_weather_api" name="test_rajahmundry_weather_has_live_current_hourly_and_weekly_data" time="0.291" /><testcase classname="tests.test_weather_api" name="test_clear_sky_wmo_code_maps_to_sunny" time="0.001"><failure message="AssertionError: assert 'cloudy' == 'sunny'&#10;  &#10;  - sunny&#10;  + cloudy">backend/tests/test_weather_api.py:42: in test_clear_sky_wmo_code_maps_to_sunny
+    assert condition_for(0)[0] == "sunny"
+E   AssertionError: assert 'cloudy' == 'sunny'
+E     
+E     - sunny
+E     + cloudy</failure></testcase><testcase classname="tests.test_weather_api" name="test_location_search_rejects_too_short_queries[]" time="0.075" /><testcase classname="tests.test_weather_api" name="test_location_search_rejects_too_short_queries[x]" time="0.072" /></testsuite></testsuites>

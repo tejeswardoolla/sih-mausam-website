@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException, Query
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field, ConfigDict
 from typing import List
 import uuid
 from datetime import datetime, timezone
+from weather_service import fetch_weather, geocode
 
 
 ROOT_DIR = Path(__file__).parent
@@ -41,6 +42,25 @@ class StatusCheckCreate(BaseModel):
 @api_router.get("/")
 async def root():
     return {"message": "Hello World"}
+
+@api_router.get("/locations")
+async def search_locations(q: str = Query(min_length=2, max_length=80), country_code: str | None = None):
+    try:
+        return {"results": await geocode(q, country_code)}
+    except Exception as exc:
+        logger.warning("Open-Meteo geocoding failed: %s", exc)
+        raise HTTPException(status_code=502, detail="Location search is temporarily unavailable") from exc
+
+@api_router.get("/weather")
+async def get_weather(
+    lat: float = Query(ge=-90, le=90), lon: float = Query(ge=-180, le=180),
+    location: str = Query(min_length=1, max_length=120),
+):
+    try:
+        return await fetch_weather(lat, lon, location)
+    except Exception as exc:
+        logger.warning("Open-Meteo weather failed: %s", exc)
+        raise HTTPException(status_code=502, detail="Live weather is temporarily unavailable") from exc
 
 @api_router.post("/status", response_model=StatusCheck)
 async def create_status_check(input: StatusCheckCreate):

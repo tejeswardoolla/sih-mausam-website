@@ -49,10 +49,13 @@ Build a modern, premium, highly interactive personalized weather web application
 - Restyled the active editorial preset into a storm-glass weather interface with atmospheric field imagery, translucent panels, teal weather tones, and a floating rotating glass globe in the hero.
 - Added condition-driven demo atmosphere: drifting clouds, subtle rain streaks, timed lightning pulses, and a pulsing globe halo around the rotating Earth.
 - Fixed storm-theme mobile navigation contrast and viewport positioning, plus mobile anchor navigation content shifting.
+- Added a provider-abstracted Open-Meteo integration with backend geocoding, current weather normalization, 24-hour forecast data, 7-day forecast data, five-minute caching, and graceful fallback handling.
+- Connected real selected-location weather to the hero, atmosphere mode, globe glow, hourly/daily forecasts, profile cards, smart recommendations, and source-safe alerts.
+- Replaced unsupported AQI/UV/pollen/tide/wave/official warning claims with explicit unavailable or integration-ready states.
 - Verified lint, production build, desktop onboarding/dashboard screenshot, and mobile interaction flow.
 
 ## Prioritized backlog
-- P0: Connect current weather, forecast, AQI, alerts, and map layers to verified IMD/weather APIs.
+- P0: Connect AQI, official alerts, and map layers to verified IMD/environmental APIs while keeping Open-Meteo as a provider adapter.
 - P1: Persist user profiles, saved locations, and dashboard order through the FastAPI/MongoDB service.
 - P1: Add real route weather and traffic data for commuter mode.
 - P2: Add detailed alert drawers, destination search, and richer map interactions.
