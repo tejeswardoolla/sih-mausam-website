@@ -289,3 +289,21 @@ body[data-theme="imd"] .leaflet-popup-content b{color:#123247}
 body[data-theme="imd"] .map-panel .map-location-badge{background:#fff;color:#123247;border-color:#c8dce7}
 body[data-theme="midnight"] .map-panel .real-map-canvas{background:#0a1224}
 @media(max-width:600px){.map-panel .real-map-canvas{height:280px}.map-panel .map-location-badge{font-size:10px;padding:6px 10px}}
+
+/* --- Name onboarding input + profile name update --- */
+.name-onboarding{padding:38px 34px}
+.name-onboarding h1 em{color:#7fe0d1;font-style:normal}
+.name-onboarding-input{width:100%;margin:8px 0 22px;padding:14px 18px;border-radius:14px;background:rgba(15,25,40,.55);border:1px solid rgba(200,230,220,.28);color:#fff;font:600 15px Manrope;letter-spacing:.2px;outline:none;transition:border-color .2s,background .2s}
+.name-onboarding-input::placeholder{color:rgba(220,235,230,.55);font-weight:500}
+.name-onboarding-input:focus{border-color:rgba(140,230,210,.75);background:rgba(15,25,40,.7);box-shadow:0 0 0 3px rgba(140,230,210,.18)}
+.onboarding-actions.single{justify-content:flex-end}
+body[data-theme="imd"] .name-onboarding-input{background:#fff;color:#123247;border-color:#c8dce7}
+body[data-theme="imd"] .name-onboarding-input::placeholder{color:#8ba3b3}
+body[data-theme="imd"] .name-onboarding-input:focus{border-color:#5aa8c8;box-shadow:0 0 0 3px rgba(90,168,200,.22)}
+body[data-theme="midnight"] .name-onboarding-input{background:rgba(20,41,71,.7);color:#f3f8ff;border-color:rgba(181,211,244,.28)}
+.profile-name-input{width:100%;margin:6px 0 8px;padding:9px 12px;border-radius:10px;background:rgba(15,25,40,.55);border:1px solid rgba(200,230,220,.24);color:#fff;font:500 12px Manrope;outline:none;transition:border-color .2s,background .2s}
+.profile-name-input::placeholder{color:rgba(220,235,230,.5)}
+.profile-name-input:focus{border-color:rgba(140,230,210,.7);background:rgba(15,25,40,.72)}
+body[data-theme="imd"] .profile-name-input{background:#fff;color:#123247;border-color:#c8dce7}
+body[data-theme="imd"] .profile-name-input::placeholder{color:#8ba3b3}
+body[data-theme="midnight"] .profile-name-input{background:rgba(20,41,71,.7);color:#f3f8ff;border-color:rgba(181,211,244,.28)}

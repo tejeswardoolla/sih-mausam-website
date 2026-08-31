@@ -32,13 +32,11 @@ const glassGlobeUrl = "https://static.prod-images.emergentagent.com/jobs/242c255
 const defaultPlace = { id: 1264527, name: "Rajahmundry", admin1: "Andhra Pradesh", country: "India", latitude: 17.0005, longitude: 81.8040, timezone: "Asia/Kolkata" };
 
 const RECOMMENDATION_ICONS = { rain: CloudRain, temp: Thermometer, wind: Wind, humidity: Droplets };
-const GREETING_NAME = "Tejeswar";
 
 function greetingFor(hour) {
-  if (hour < 5) return "Good night";
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  if (hour < 21) return "Good evening";
+  if (hour >= 5 && hour < 12) return "Good morning";
+  if (hour >= 12 && hour < 17) return "Good afternoon";
+  if (hour >= 17 && hour < 21) return "Good evening";
   return "Good night";
 }
 
@@ -87,6 +85,51 @@ function LocationSearch({ query, setQuery, results, onSelect, onClose, searching
   );
 }
 
+function NamePrompt({ onSubmit }) {
+  const [value, setValue] = useState("");
+  const submit = (event) => {
+    event.preventDefault();
+    const trimmed = value.trim();
+    if (!trimmed) return;
+    onSubmit(trimmed);
+  };
+  return (
+    <div className="onboarding-backdrop" data-testid="name-onboarding-backdrop">
+      <motion.form
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="onboarding name-onboarding"
+        data-testid="name-onboarding"
+        onSubmit={submit}
+      >
+        <div className="onboarding-mark"><Sun size={22} /></div>
+        <span className="eyebrow">MAUSAM · SKY SYNC</span>
+        <h1>Welcome to<br /><em>Sky Sync</em></h1>
+        <p className="onboarding-copy">What should we call you?</p>
+        <input
+          autoFocus
+          className="name-onboarding-input"
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
+          placeholder="Your preferred name"
+          maxLength={40}
+          data-testid="name-onboarding-input"
+        />
+        <div className="onboarding-actions single">
+          <button
+            type="submit"
+            className="primary-button"
+            disabled={!value.trim()}
+            data-testid="name-onboarding-continue"
+          >
+            Continue <span>→</span>
+          </button>
+        </div>
+      </motion.form>
+    </div>
+  );
+}
+
 function Onboarding({ onChoose, onSkip }) {
   const [selected, setSelected] = useState(["fitness"]);
   const toggle = (id) => setSelected((items) => items.includes(id) ? items.filter((x) => x !== id) : [...items, id]);
@@ -113,7 +156,7 @@ function Onboarding({ onChoose, onSkip }) {
   );
 }
 
-function Hero({ location, weather, loading, localTime, greeting }) {
+function Hero({ location, weather, loading, localTime, greeting, userName }) {
   const current = weather?.current;
   const visual = deriveAtmosphere(weather);
   const state = visual.atmosphere;
@@ -185,7 +228,7 @@ function Hero({ location, weather, loading, localTime, greeting }) {
       <div className="hero-bottom">
         <div className="hero-summary">
           <span className="weather-icon"><WeatherGlyph condition={state} size={30} /></span>
-          <span>{greeting}, {GREETING_NAME} <b>👋</b><br /><small data-testid="hero-local-time">{localTime}</small></span>
+          <span>{greeting}, {userName} <b>👋</b><br /><small data-testid="hero-local-time">{localTime}</small></span>
         </div>
         <div className="hero-metrics">
           {[
@@ -710,6 +753,8 @@ function Recommendation({ persona, insight, location, weatherSource }) {
 
 function App() {
   const [personaId, setPersonaId] = useState(localStorage.getItem("mausam-persona") || "fitness");
+  const [userName, setUserName] = useState(() => localStorage.getItem("mausam-user-name") || "");
+  const [showNamePrompt, setShowNamePrompt] = useState(() => !localStorage.getItem("mausam-user-name"));
   const [onboarding, setOnboarding] = useState(localStorage.getItem("mausam-seen") !== "true");
   const [dark, setDark] = useState(false);
   const [customize, setCustomize] = useState(false);
@@ -753,8 +798,23 @@ function App() {
   const localDate = useMemo(() => formatLocationDate(timezone), [timezone, tick]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const localTime = useMemo(() => formatLocationTime(timezone), [timezone, tick]);
-  const greeting = greetingFor(localParts.hour);
+  // Greeting is derived from the USER'S BROWSER local time, per requirement.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const greeting = useMemo(() => greetingFor(new Date().getHours()), [tick]);
+  const friendlyName = userName || "friend";
+  const avatarInitial = (userName || "M").trim().charAt(0).toUpperCase();
   const insight = useMemo(() => buildRecommendation(personaId, weather, selectedPlace), [personaId, weather, selectedPlace]);
+
+  const saveUserName = (nextName) => {
+    const trimmed = (nextName || "").trim();
+    setUserName(trimmed);
+    if (trimmed) localStorage.setItem("mausam-user-name", trimmed);
+    else localStorage.removeItem("mausam-user-name");
+  };
+  const completeNamePrompt = (nextName) => {
+    saveUserName(nextName);
+    setShowNamePrompt(false);
+  };
 
   const choosePersona = (id) => { setPersonaId(id); localStorage.setItem("mausam-persona", id); localStorage.setItem("mausam-seen", "true"); setOnboarding(false); };
   const chooseLocation = (place) => {
@@ -831,7 +891,11 @@ function App() {
   return (
     <div className="app-shell">
       <AnimatePresence>
-        {onboarding && <Onboarding onChoose={choosePersona} onSkip={() => { localStorage.setItem("mausam-seen", "true"); setOnboarding(false); }} />}
+        {showNamePrompt && <NamePrompt onSubmit={completeNamePrompt} />}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {!showNamePrompt && onboarding && <Onboarding onChoose={choosePersona} onSkip={() => { localStorage.setItem("mausam-seen", "true"); setOnboarding(false); }} />}
       </AnimatePresence>
 
       <header className="topbar">
@@ -864,7 +928,7 @@ function App() {
           </div>
           <IconButton label="Toggle dark mode" onClick={() => setDark(!dark)} testid="dark-mode-toggle">{dark ? <Sun size={18} /> : <Moon size={18} />}</IconButton>
           <IconButton label="Open notifications" onClick={() => setShowNotifications(!showNotifications)} testid="notification-button"><Bell size={18} /><i className="notification-dot" /></IconButton>
-          <IconButton label="Open profile" onClick={() => setShowProfile(!showProfile)} testid="profile-button"><span className="avatar">T</span></IconButton>
+          <IconButton label="Open profile" onClick={() => setShowProfile(!showProfile)} testid="profile-button"><span className="avatar" data-testid="profile-avatar">{avatarInitial}</span></IconButton>
           <IconButton label="Open menu" onClick={() => setMobileMenu(!mobileMenu)} testid="mobile-menu-button"><Menu size={20} /></IconButton>
         </div>
         {showNotifications && (
@@ -876,8 +940,17 @@ function App() {
         )}
         {showProfile && (
           <div className="header-popover profile-popover" data-testid="profile-panel">
-            <b>{GREETING_NAME}</b>
+            <b data-testid="profile-name-display">{userName || "Set your name"}</b>
             <span>{persona.label} profile</span>
+            <input
+              type="text"
+              className="profile-name-input"
+              value={userName}
+              onChange={(event) => saveUserName(event.target.value)}
+              placeholder="Update your name"
+              maxLength={40}
+              data-testid="profile-name-input"
+            />
             <button onClick={() => setCustomize(true)} data-testid="profile-preferences-button">Open preferences</button>
           </div>
         )}
@@ -887,7 +960,7 @@ function App() {
         <div className="welcome-row">
           <div>
             <span className="eyebrow" data-testid="local-datetime">{localDate} · {localTime} · {timezone}</span>
-            <h2>{greeting}, {GREETING_NAME} <span>👋</span></h2>
+            <h2 data-testid="welcome-greeting">{greeting}, {friendlyName} <span>👋</span></h2>
             <p data-testid="persona-note">{persona.note} · Personalized for <b>{persona.label}</b></p>
           </div>
           <button className="customize-button" onClick={() => setCustomize(true)} data-testid="customize-dashboard-button">
@@ -906,7 +979,7 @@ function App() {
         {weatherError && <div className="weather-inline-error" data-testid="weather-error">{weatherError}</div>}
 
         <div className="dashboard-grid">
-          {modules.hero && <Hero location={location} weather={weather} loading={weatherLoading} localTime={localTime} greeting={greeting} />}
+          {modules.hero && <Hero location={location} weather={weather} loading={weatherLoading} localTime={localTime} greeting={greeting} userName={friendlyName} />}
           {modules.personal && <Lifestyle weather={weather} />}
         </div>
 
