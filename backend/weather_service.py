@@ -58,8 +58,8 @@ async def fetch_weather(latitude: float, longitude: float, location: str) -> dic
         return cached[1]
     params = {
         "latitude": latitude, "longitude": longitude, "timezone": "auto", "forecast_days": 7,
-        "current": "temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,is_day",
-        "hourly": "temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,wind_speed_10m,weather_code,is_day",
+        "current": "temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_direction_10m,is_day",
+        "hourly": "temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,wind_speed_10m,wind_direction_10m,weather_code,is_day",
         "daily": "temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,weather_code,sunrise,sunset",
     }
     async with httpx.AsyncClient(timeout=10) as client:
@@ -85,6 +85,7 @@ async def fetch_weather(latitude: float, longitude: float, location: str) -> dic
             "precipitation_probability": _pick(hourly_raw, "precipitation_probability", index, default=0),
             "precipitation_mm": _pick(hourly_raw, "precipitation", index, default=0),
             "wind_kmh": _pick(hourly_raw, "wind_speed_10m", index, default=0),
+            "wind_direction": _pick(hourly_raw, "wind_direction_10m", index, default=0),
             "weather_code": code, "is_day": 1 if is_day_hour else 0,
             "condition": condition, "condition_label": label,
         })
@@ -118,6 +119,7 @@ async def fetch_weather(latitude: float, longitude: float, location: str) -> dic
             "feels_like_c": current.get("apparent_temperature"),
             "humidity": current.get("relative_humidity_2m"),
             "wind_kmh": current.get("wind_speed_10m"),
+            "wind_direction": current.get("wind_direction_10m", 0),
             "precipitation_mm": current.get("precipitation", 0),
             "weather_code": current.get("weather_code"),
             "is_day": 1 if current_is_day else 0,

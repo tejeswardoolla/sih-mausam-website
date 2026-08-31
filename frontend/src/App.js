@@ -1,10 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Activity, AirVent, Bell, ChevronDown, CloudRain, Droplets, Eye, Globe2, HeartPulse, Leaf,
   MapPin, Menu, Moon, MoreHorizontal, Navigation, Palette, Plus, Search, Settings2, ShieldAlert,
   Sun, Sunrise, Sunset, Thermometer, UserRound, Waves, Wind, X, Zap,
 } from "lucide-react";
+import { MapContainer, TileLayer, Marker, CircleMarker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import { fetchWeather, searchWeatherLocations, weatherIcon } from "@/weatherService";
 import {
   findNowIndex, formatHourLabel, formatLocationDate, formatLocationTime, formatSunTime, formatWeekday, getLocalParts,
@@ -447,24 +450,60 @@ function Weekly({ weather }) {
   );
 }
 
-function WeatherMap({ location, weather }) {
+function tempToColor(t) {
+  if (t == null) return "#4a90e2";
+  const clamped = Math.max(-10, Math.min(45, t));
+  // -10 -> hue 240 (deep blue) ... 45 -> hue 0 (red)
+  const hue = Math.round(240 - ((clamped + 10) / 55) * 240);
+  return `hsl(${hue}, 78%, 55%)`;
+}
+
+function MapController({ center, place }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!center) return;
+    map.flyTo(center, map.getZoom() >= 6 ? map.getZoom() : 8, { duration: 0.9 });
+    // Invalidate size on next tick in case the panel resized (mobile / customize).
+    setTimeout(() => map.invalidateSize(), 300);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [center?.[0], center?.[1], place?.name]);
+  return null;
+}
+
+function WeatherMap({ location, weather, place }) {
   const [layer, setLayer] = useState("temperature");
   const c = weather?.current;
   const temp = c?.temperature_c;
-  const rainMax = (weather?.hourly || []).slice(0, 12).reduce((max, h) => Math.max(max, Number(h.precipitation_probability || 0)), 0);
-  const rainMm24 = (weather?.hourly || []).slice(0, 24).reduce((sum, h) => sum + Number(h.precipitation_mm || 0), 0);
   const wind = c?.wind_kmh || 0;
-  const tempIntensity = temp == null ? 0.5 : Math.max(0, Math.min(1, (temp - 5) / 35));
-  const rainIntensity = Math.min(1, rainMax / 100);
-  const windIntensity = Math.min(1, wind / 50);
-  const dropCount = Math.max(4, Math.round(rainMax / 5));
-  const lineCount = Math.max(6, Math.round(wind / 2));
-
+  const windDir = c?.wind_direction ?? 0;
+  const rainMax = (weather?.hourly || []).slice(0, 12).reduce((m, h) => Math.max(m, Number(h.precipitation_probability || 0)), 0);
+  const rainMm24 = (weather?.hourly || []).slice(0, 24).reduce((s, h) => s + Number(h.precipitation_mm || 0), 0);
+  const center = useMemo(() => [
+    Number(place?.latitude) || 20.5937,
+    Number(place?.longitude) || 78.9629,
+  ], [place?.latitude, place?.longitude]);
   const layers = [
     { id: "temperature", label: "Temperature" },
     { id: "rainfall", label: "Rainfall" },
     { id: "wind", label: "Wind" },
   ];
+
+  const pinIcon = useMemo(() => L.divIcon({
+    className: "mausam-map-pin",
+    html: `<div class="mausam-map-pin-inner"><span></span><b></b></div>`,
+    iconSize: [26, 34], iconAnchor: [13, 30], popupAnchor: [0, -28],
+  }), []);
+
+  const windArrowIcon = useMemo(() => L.divIcon({
+    className: "mausam-wind-arrow",
+    html: `<div class="wind-arrow-wrap" style="transform: rotate(${windDir}deg)">
+      <svg width="52" height="52" viewBox="0 0 52 52">
+        <circle cx="26" cy="26" r="22" fill="rgba(15,25,45,0.55)" stroke="rgba(220,240,255,0.85)" stroke-width="1.5"/>
+        <path d="M26 8 L34 32 L26 26 L18 32 Z" fill="#ffd7a8" stroke="#fff" stroke-width="1" stroke-linejoin="round"/>
+      </svg>
+    </div>`,
+    iconSize: [52, 52], iconAnchor: [26, 26], popupAnchor: [0, -22],
+  }), [windDir]);
 
   return (
     <section className="panel map-panel" data-testid="weather-map">
@@ -472,68 +511,75 @@ function WeatherMap({ location, weather }) {
         <div><span className="eyebrow">WEATHER LAYERS · SELECTED LOCATION</span><h2>Weather map</h2></div>
         <button className="map-location" data-testid="map-location-button"><MapPin size={15} /> {location}</button>
       </div>
-      <div
-        className={`map-canvas map-layer-${layer}`}
-        data-testid={`map-canvas-${layer}`}
-        data-active-layer={layer}
-        style={{
-          "--temp-intensity": tempIntensity,
-          "--rain-intensity": rainIntensity,
-          "--wind-intensity": windIntensity,
-        }}
-      >
-        <div className="map-grid" />
-        <div className="map-road road-one" />
-        <div className="map-road road-two" />
+      <div className="map-canvas real-map-canvas" data-testid={`map-canvas-${layer}`} data-active-layer={layer}>
+        <MapContainer
+          center={center}
+          zoom={9}
+          scrollWheelZoom={false}
+          className="leaflet-map"
+          attributionControl={false}
+          whenReady={(e) => { try { e.target?.getContainer?.().setAttribute("data-testid", "leaflet-map"); } catch (_) {} }}
+        >
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            subdomains={["a", "b", "c"]}
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            maxZoom={18}
+          />
+          <MapController center={center} place={place} />
 
-        {layer === "temperature" && (
-          <>
-            <div className="temp-heatmap" aria-hidden="true" />
-            <div className="temp-band cold" aria-hidden="true" />
-            <div className="temp-band warm" aria-hidden="true" />
-            <div className="map-value-chip" data-testid="map-value-chip">
-              <Thermometer size={14} /> {temp != null ? `${Math.round(temp)}°C` : "—"}
-            </div>
-          </>
-        )}
+          <Marker position={center} icon={pinIcon}>
+            <Popup>
+              <b>{location}</b>
+              <br />
+              {c?.condition_label || "—"} · {temp != null ? `${Math.round(temp)}°C` : "—"}
+            </Popup>
+          </Marker>
 
-        {layer === "rainfall" && (
-          <>
-            <div className="rain-blobs" aria-hidden="true">
-              {Array.from({ length: 8 }, (_, i) => (
-                <i key={i} style={{ left: `${8 + (i * 12) % 84}%`, top: `${(i * 19) % 78}%`, animationDelay: `-${i * 0.4}s` }} />
-              ))}
-            </div>
-            <div className="rain-drops" aria-hidden="true">
-              {Array.from({ length: dropCount }, (_, i) => (
-                <i key={i} style={{ left: `${5 + (i * 7) % 92}%`, animationDelay: `-${(i % 5) * 0.25}s`, animationDuration: `${1.6 + (i % 3) * 0.2}s` }} />
-              ))}
-            </div>
-            <div className="map-value-chip" data-testid="map-value-chip">
-              <CloudRain size={14} /> {Math.round(rainMax)}% · {rainMm24.toFixed(1)} mm/24h
-            </div>
-          </>
-        )}
+          {layer === "temperature" && temp != null && (
+            <CircleMarker
+              center={center}
+              radius={34}
+              pathOptions={{ color: tempToColor(temp), fillColor: tempToColor(temp), fillOpacity: 0.4, weight: 2 }}
+            >
+              <Popup>Temperature: {Math.round(temp)}°C{c?.feels_like_c != null ? ` · Feels like ${Math.round(c.feels_like_c)}°` : ""}</Popup>
+            </CircleMarker>
+          )}
 
-        {layer === "wind" && (
-          <>
-            <div className="wind-lines" aria-hidden="true">
-              {Array.from({ length: lineCount }, (_, i) => (
-                <i key={i} style={{
-                  top: `${(i * 11) % 92}%`,
-                  animationDelay: `-${(i % 6) * 0.5}s`,
-                  animationDuration: `${Math.max(1.2, 3.5 - windIntensity * 2)}s`,
-                  width: `${28 + (i % 4) * 10}px`,
-                }} />
-              ))}
-            </div>
-            <div className="map-value-chip" data-testid="map-value-chip">
-              <Wind size={14} /> {Math.round(wind)} km/h
-            </div>
-          </>
-        )}
+          {layer === "rainfall" && (
+            <>
+              <CircleMarker
+                center={center}
+                radius={Math.max(20, Math.min(70, 20 + rainMax * 0.5))}
+                pathOptions={{ color: "#5eb8ff", fillColor: "#3a97ff", fillOpacity: Math.max(0.18, Math.min(0.55, rainMax / 100)), weight: 2 }}
+              >
+                <Popup>Rain probability (12h): {Math.round(rainMax)}%<br />Total 24h: {rainMm24.toFixed(1)} mm</Popup>
+              </CircleMarker>
+              {rainMax >= 25 && (
+                <CircleMarker
+                  center={center}
+                  radius={Math.max(10, Math.min(38, rainMax * 0.25))}
+                  pathOptions={{ color: "#8ed3ff", fillColor: "#8ed3ff", fillOpacity: 0.5, weight: 0 }}
+                />
+              )}
+            </>
+          )}
 
-        <div className="map-pin"><MapPin size={22} /><span data-testid="map-pin-label">{location}</span></div>
+          {layer === "wind" && (
+            <Marker position={center} icon={windArrowIcon}>
+              <Popup>Wind {Math.round(wind)} km/h · from {Math.round(windDir)}°</Popup>
+            </Marker>
+          )}
+        </MapContainer>
+
+        <div className="map-location-badge" data-testid="map-pin-label">
+          <MapPin size={13} /> {location}
+        </div>
+        <div className="map-value-chip" data-testid="map-value-chip">
+          {layer === "temperature" && (<><Thermometer size={14} /> {temp != null ? `${Math.round(temp)}°C` : "—"}</>)}
+          {layer === "rainfall" && (<><CloudRain size={14} /> {Math.round(rainMax)}% · {rainMm24.toFixed(1)} mm/24h</>)}
+          {layer === "wind" && (<><Wind size={14} /> {Math.round(wind)} km/h · {Math.round(windDir)}°</>)}
+        </div>
       </div>
       <div className="layer-tabs" role="tablist" data-testid="map-layer-tabs">
         {layers.map((l) => (
@@ -549,7 +595,7 @@ function WeatherMap({ location, weather }) {
           </button>
         ))}
       </div>
-      <p className="map-note" data-testid="map-note">Layers are derived from the live Open-Meteo forecast for this location. This is a weather-data visualization prototype, not live radar/satellite imagery.</p>
+      <p className="map-note" data-testid="map-note">Interactive geographical map by Leaflet with OpenStreetMap tiles. Layer overlays are derived from the live Open-Meteo forecast at the selected location.</p>
     </section>
   );
 }
@@ -869,7 +915,7 @@ function App() {
         <div className="lower-grid">
           <div>
             {modules.hourly && <Hourly weather={weather} timezone={timezone} onViewAll={() => setShowHourlyDetail(true)} />}
-            {modules.map && <WeatherMap location={location} weather={weather} />}
+            {modules.map && <WeatherMap location={location} weather={weather} place={selectedPlace} />}
           </div>
           <div>
             {modules.weekly && <Weekly weather={weather} />}

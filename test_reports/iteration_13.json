@@ -1,0 +1,30 @@
+{
+  "summary": "Iteration 13: Verified real Leaflet.js interactive map in Mausam. Backend /api/weather now returns numeric wind_direction on current + all 24 hourly rows for Rajahmundry, Hyderabad and Mumbai. Frontend map renders react-leaflet MapContainer with real OSM tiles (12 tiles loaded), CSS filter applied to .leaflet-tile-pane for storm-glass dark theme (invert(1) hue-rotate(190deg) saturate(0.85) brightness(0.9) contrast(0.95)), a real Leaflet marker with popup, and CircleMarker/wind-arrow overlays that update on layer switch. AQI + Satellite layer buttons are absent — only 3 buttons (Temperature/Rainfall/Wind). data-active-layer syncs correctly on the map-canvas. Location sync verified: switching to Hyderabad (via saved-place card) and Mumbai (via location search) updates map-pin-label, map-value-chip and re-loads tiles. Leaflet zoom control present. No console errors. Mobile 390x844 has no horizontal overflow.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_wind_direction_iteration13.py",
+    "/app/test_reports/pytest/iter13_wind.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "react-leaflet's MapContainer does not forward arbitrary HTML attributes like data-testid to the DOM container. Fixed by using the whenReady callback to setAttribute('data-testid','leaflet-map') on the container element (see /app/frontend/src/App.js WeatherMap). Consider making this an official pattern for any future map testability hooks.",
+    "WeatherMap component + CircleMarker layer swap logic looks clean; overlays correctly conditional on `layer`. Wind arrow uses a rotated SVG divIcon — nicely aligned with wind_direction now that the backend supplies it.",
+    "MapController fly-to on selectedPlace change works and re-centers the map (verified for Hyderabad + Mumbai). No stale label after switching."
+  ],
+  "updated_files": [
+    "/app/frontend/src/App.js (WeatherMap: added whenReady handler to set data-testid on Leaflet container so automation can locate the map DOM element)",
+    "/app/backend/tests/test_wind_direction_iteration13.py (new regression test for wind_direction enrichment)"
+  ],
+  "success_rate": {"backend": "100% (3/3)", "frontend": "100% (all map + layer + location-sync assertions passed)"},
+  "test_credentials": "None required",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Real Leaflet map integration is stable. Key selectors verified: [data-testid=leaflet-map], [data-testid=map-pin-label], [data-testid=map-value-chip], [data-testid=map-layer-tabs], [data-testid=map-layer-temperature|rainfall|wind], [data-testid=map-canvas-<layer>] (also carries data-active-layer). Location switch is via saved-place-<name> cards or [data-testid=location-selector] modal (uses location-search-input + location-result-<slug>). AQI/Satellite buttons intentionally absent. Backend wind_direction present at current.wind_direction and hourly[i].wind_direction. OSM tiles + CSS filter is the dark-theme strategy (no API key needed).",
+  "rca of the issue": "N/A — no bugs found. Only a minor testability gap (MapContainer not forwarding data-testid) which was fixed inline with whenReady handler so the leaflet-map testid selector now resolves."
+}
