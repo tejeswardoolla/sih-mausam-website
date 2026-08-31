@@ -94,14 +94,16 @@ function NamePrompt({ onSubmit }) {
     onSubmit(trimmed);
   };
   return (
-    <div className="onboarding-backdrop" data-testid="name-onboarding-backdrop">
+    <div className="onboarding-backdrop name-onboarding-backdrop" data-testid="name-onboarding-backdrop">
       <motion.form
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, y: 24, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.5, ease: [0.4, 0.14, 0.3, 1] }}
         className="onboarding name-onboarding"
         data-testid="name-onboarding"
         onSubmit={submit}
       >
+        <div className="name-onboarding-glow" aria-hidden="true" />
         <div className="onboarding-mark"><Sun size={22} /></div>
         <span className="eyebrow">MAUSAM · SKY SYNC</span>
         <h1>Welcome to<br /><em>Sky Sync</em></h1>
@@ -118,7 +120,7 @@ function NamePrompt({ onSubmit }) {
         <div className="onboarding-actions single">
           <button
             type="submit"
-            className="primary-button"
+            className="primary-button name-onboarding-cta"
             disabled={!value.trim()}
             data-testid="name-onboarding-continue"
           >
