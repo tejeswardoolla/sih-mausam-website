@@ -1,0 +1,28 @@
+{
+  "summary": "Retested HealthCard slug bug fix (iteration 10). Onboarded as Health & wellness, switched to Health persona. All four required test-ids now render correctly with live values.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "verification_details": {
+    "health-metric-rain-12h": "Present; text 'Rain (12h) 14%' (contains %)",
+    "health-metric-feels-like": "Present; '33°'",
+    "health-metric-humidity": "Present; '68%'",
+    "health-metric-wind": "Present; '23 km/h'",
+    "all_health_metric_testids": ["health-metric-grid", "health-metric-feels-like", "health-metric-humidity", "health-metric-wind", "health-metric-rain-12h"],
+    "todays_health_insight": "Rendered with 'Comfortable' status pill and dynamic body text referencing 33°/68%/23 km/h",
+    "no_stale_rain-h-": "Confirmed: no 'health-metric-rain-h-' present"
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "100%"},
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 10 confirms HealthCard slug fix. Only spot-checked the target bug per request (targeted retest). Full regression from iteration_9 was not re-executed but the Health persona area was visually confirmed (Insight pill + environmental data + metric grid). Onboarding flow requires selecting a persona + 'Build my dashboard'; then click the Health persona tab in the header to see the HealthCard.",
+  "rca of the issue": "Previous slug regex `/[^a-z]+/g` stripped digits from labels like 'Rain (12h)' producing 'rain-h-'. Fix uses explicit slug keys per row in HealthCard rows array; verified live in preview."
+}

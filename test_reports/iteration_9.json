@@ -1,0 +1,57 @@
+{
+  "summary": "Iteration 9 correction pass verified. Backend 6/6 pytest pass. Frontend: Farmer daylight logic works (headline 'Better field-work window', best-window '4 PM – 5 PM' inside daylight, no fabricated soil/crop copy). Health redesign renders headline/status/message + 4 real metric cards + 'AQI/UV/Pollen Unavailable' env row. Travel shows real location (Rajahmundry / Mumbai after switch), dynamic 'Good travel conditions' headline and best-window chip. Weather map layer buttons functionally switch temperature/rainfall/wind canvases with distinct value chips; AQI + Satellite disabled. Central location sync (hero + map-pin + travel-location) updates on Mumbai switch. Regression: 24h modal 24 rows + 1 now, hourly NOW label, sun-row readable, 3 themes switch, mobile 0 overflow. ONE bug: health-metric-rain-12h test-id is emitted as 'health-metric-rain-h-' because the id-slugifier regex strips digits.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "HealthCard health-metric-grid",
+        "issue": "The 12-hour rain metric renders with data-testid='health-metric-rain-h-' instead of the spec's 'health-metric-rain-12h'. Root cause: `k.toLowerCase().replace(/[^a-z]+/g, '-')` strips the digits '12' from label 'Rain (12h)'. Fix: replace regex with `/[^a-z0-9]+/g` (and trim trailing dashes) or hardcode key='rain-12h'. Value itself is correct (e.g. '14%').",
+        "selector": "[data-testid=health-metric-rain-12h]",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Saved places row",
+        "issues": ["After switching to Mumbai, the string 'Rajahmundry' still appears in the visible body inside the saved-place chip (saved-place-rajahmundry). This is expected saved-locations behaviour, but the review request literally asked 'No stale Rajahmundry remains anywhere in the visible body'. Consider either updating the acceptance criterion or hiding non-selected saved chips."]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_weather_iteration8.py",
+    "/app/test_reports/pytest/pytest_results_iteration9.xml"
+  ],
+  "action_items": [
+    "Fix HealthCard test-id slug: change regex to /[^a-z0-9]+/g (or use explicit keys). Current data-testid is 'health-metric-rain-h-', spec requires 'health-metric-rain-12h'."
+  ],
+  "critical_code_review_comments": [
+    "App.js HealthCard: data-testid derivation `k.toLowerCase().replace(/[^a-z]+/g, '-')` silently drops digits. Prefer explicit `testid` per row or a slug helper that keeps [a-z0-9].",
+    "App.js WeatherMap: `map-value-chip` reuses the same test-id across three visible children (conditionally rendered — only one is mounted at a time, so it works today, but any refactor that mounts them together will break tests).",
+    "recommendationEngine.agriculture: `bestFit` is computed via generic bestOutdoorWindow above the switch and used elsewhere but unused in agriculture branch; harmless but noisy.",
+    "recommendationEngine.health.status: status is set but not returned in the 'watch' hot-spell branch's fallback ordering when only humidity trips — verified in current data path; keep an eye during future refactor."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% (6/6 pytest)",
+    "frontend": "~95% (all functional flows work; one wrong data-testid string for rain-12h metric)"
+  },
+  "verified_flows": [
+    "Farmer: headline='Better field-work window', detail mentions daylight, best-window='4 PM – 5 PM' (inside sunrise 5:49 AM – sunset 6:17 PM). No 'soil moisture'/'irrigation'/fake crop copy.",
+    "Health: headline='Comfortable outdoor conditions this morning', status pill='Comfortable', message references live 33°/68%/23 km/h. Env row shows 'AQI Unavailable','UV Unavailable','Pollen Unavailable'. No 'Air quality feed pending' / 'Know your environment' remnants.",
+    "Travel Rajahmundry: travel-location='Rajahmundry', headline='Good travel conditions', message references numeric conditions, best-window='3 PM – 5 PM'.",
+    "Map layers: click temperature/rainfall/wind switches map-canvas-{layer} with data-active-layer and distinct chips ('30°C' / '14% · 0.1 mm/24h' / '23 km/h'). AQI + Satellite buttons carry disabled attr and are non-interactive.",
+    "Location switch: selecting Mumbai updates hero-location, travel-location, and map-pin-label to 'Mumbai'; weather re-fetched.",
+    "No forbidden fabricated substrings: 'Air quality feed pending','Selected place','AQI 42','UV 6','Pollen Low' all absent.",
+    "24h modal opens with 24 rows and exactly 1 .now row; closes cleanly.",
+    "Hourly hour-0 labelled 'NOW' with now-hour class.",
+    "sun-row shows readable Sunrise 5:49 AM / Sunset 6:17 PM.",
+    "Themes editorial/imd/midnight each set body.dataset.theme correctly.",
+    "Mobile 390x844: 0 horizontal overflow; no console errors."
+  ],
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Only outstanding issue is the health-metric-rain-12h test-id slug bug in App.js HealthCard (regex strips digits). Once fixed, re-run the same Playwright flow. Backend is stable; iteration_8 pytest suite still fully passes and covers the enriched shape.",
+  "rca of the issue": "In App.js HealthCard, the data-testid for each metric row is generated by `k.toLowerCase().replace(/[^a-z]+/g, '-')`. For label 'Rain (12h)' this collapses ' (12', ')' into single '-'s AND strips the digits because `[^a-z]` matches any non-letter (including 0-9). Output becomes 'rain-h-' → data-testid 'health-metric-rain-h-'. Fix: use `/[^a-z0-9]+/g` and optionally `.replace(/-+$/,'')` so 'Rain (12h)' → 'rain-12h' → 'health-metric-rain-12h' as the review request expects."
+}

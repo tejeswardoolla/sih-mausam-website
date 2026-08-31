@@ -196,39 +196,57 @@ function FitnessCard({ weather, insight }) {
   );
 }
 
-function HealthCard({ weather }) {
+function HealthCard({ weather, insight }) {
   const c = weather?.current;
+  const feels = c?.feels_like_c != null ? Math.round(c.feels_like_c) : (c?.temperature_c != null ? Math.round(c.temperature_c) : "—");
+  const humidity = c?.humidity != null ? Math.round(c.humidity) : "—";
+  const wind = c?.wind_kmh != null ? Math.round(c.wind_kmh) : "—";
+  const rainNext = (weather?.hourly || []).slice(0, 12).reduce((max, h) => Math.max(max, Number(h.precipitation_probability || 0)), 0);
+  const status = insight?.status || "Live";
+  const statusKey = status.toLowerCase().replace(/[^a-z]+/g, "-");
+  const headline = insight?.headline || (weather ? "Checking today's health insight" : "Waiting for live weather");
+  const message = insight?.message || "Recommendation will appear when live weather is ready.";
   return (
-    <motion.section layout className="panel lifestyle health-card" data-testid="health-module">
+    <motion.section layout className="panel lifestyle health-card health-card-v2" data-testid="health-module">
       <div className="module-heading">
-        <div><span className="eyebrow rose">HEALTH WEATHER</span><h2>Know your environment</h2></div>
-        <span className="score rose-score">LIVE</span>
+        <div><span className="eyebrow rose">TODAY&apos;S HEALTH INSIGHT</span><h2 data-testid="health-headline">{headline}</h2></div>
+        <span className={`health-status status-${statusKey}`} data-testid="health-status">{status}</span>
       </div>
-      <div className="health-readings">
-        <div className="aqi-ring"><strong>N/A</strong><span>AQI</span></div>
-        <div>
-          <b>Air quality feed pending</b>
-          <p>AQI, pollen and UV are not part of the current source</p>
-          <div className="progress"><i style={{ width: "28%" }} /></div>
+      <p className="health-insight-message" data-testid="health-insight-message">{message}</p>
+      <div className="health-metric-grid" data-testid="health-metric-grid">
+        {[
+          [Thermometer, "Feels like", "feels-like", feels === "—" ? "—" : `${feels}°`],
+          [Droplets, "Humidity", "humidity", humidity === "—" ? "—" : `${humidity}%`],
+          [Wind, "Wind", "wind", wind === "—" ? "—" : `${wind} km/h`],
+          [CloudRain, "Rain (12h)", "rain-12h", `${Math.round(rainNext)}%`],
+        ].map(([I, k, key, v]) => (
+          <div className="health-metric" key={k} data-testid={`health-metric-${key}`}>
+            <I size={16} /><small>{k}</small><b>{v}</b>
+          </div>
+        ))}
+      </div>
+      <div className="health-env-secondary" data-testid="health-env-secondary">
+        <span className="eyebrow">ENVIRONMENTAL DATA</span>
+        <div className="health-env-row">
+          <span>AQI <b>Unavailable</b></span>
+          <span>UV <b>Unavailable</b></span>
+          <span>Pollen <b>Unavailable</b></span>
         </div>
+        <p className="alert-note-small">Enabled when an official environmental source is connected.</p>
       </div>
-      <div className="health-row">
-        <span><Leaf size={15} /> Pollen <b>N/A</b></span>
-        <span><Sun size={15} /> UV <b>N/A</b></span>
-        <span><Droplets size={15} /> Humidity <b>{c?.humidity != null ? `${Math.round(c.humidity)}%` : "—"}</b></span>
-      </div>
-      <p className="alert-note"><ShieldAlert size={16} /> AQI, pollen and UV are ready for an IMD/environmental feed when available.</p>
     </motion.section>
   );
 }
 
-function TravelCard({ weather }) {
+function TravelCard({ weather, insight, location }) {
   const c = weather?.current;
   const rain = (weather?.hourly || []).slice(0, 12).reduce((max, h) => Math.max(max, Number(h.precipitation_probability || 0)), 0);
+  const headline = insight?.headline || "Travel outlook";
+  const message = insight?.message || (rain >= 50 ? "Rain probability increases in the next 12 hours." : "Weather stays mostly stable through the day.");
   return (
     <motion.section layout className="panel lifestyle travel-card" data-testid="travel-module">
       <div className="module-heading">
-        <div><span className="eyebrow blue">TRAVEL WEATHER</span><h2>Selected place</h2></div>
+        <div><span className="eyebrow blue">TRAVEL WEATHER</span><h2 data-testid="travel-location">{location}</h2></div>
         <IconButton label="More travel options" testid="travel-more-button"><MoreHorizontal size={20} /></IconButton>
       </div>
       <div className="travel-main">
@@ -241,14 +259,19 @@ function TravelCard({ weather }) {
           <span><Wind size={15} /> {c?.wind_kmh != null ? Math.round(c.wind_kmh) : "—"} km/h</span>
         </div>
       </div>
-      <div className="packing">
+      <div className="packing" data-testid="travel-recommendation">
         <span>🧳</span>
         <div>
-          <b>{rain >= 50 ? "Keep rain protection accessible" : "Pack for changing weather"}</b>
-          <small>Recommendation based on the next 12 hours</small>
+          <b data-testid="travel-headline">{headline}</b>
+          <small data-testid="travel-message">{message}</small>
         </div>
         <ChevronDown size={17} />
       </div>
+      {insight?.bestWindow ? (
+        <span className="best-window-chip" data-testid="travel-best-window"><Sunrise size={12} /> Best travel window · {insight.bestWindow}</span>
+      ) : (
+        <span className="best-window-chip muted" data-testid="travel-best-window">No clear travel window</span>
+      )}
     </motion.section>
   );
 }
@@ -386,26 +409,111 @@ function Weekly({ weather }) {
   );
 }
 
-function WeatherMap({ location }) {
-  const [layer, setLayer] = useState("Rainfall");
+function WeatherMap({ location, weather }) {
+  const [layer, setLayer] = useState("temperature");
+  const c = weather?.current;
+  const temp = c?.temperature_c;
+  const rainMax = (weather?.hourly || []).slice(0, 12).reduce((max, h) => Math.max(max, Number(h.precipitation_probability || 0)), 0);
+  const rainMm24 = (weather?.hourly || []).slice(0, 24).reduce((sum, h) => sum + Number(h.precipitation_mm || 0), 0);
+  const wind = c?.wind_kmh || 0;
+  const tempIntensity = temp == null ? 0.5 : Math.max(0, Math.min(1, (temp - 5) / 35));
+  const rainIntensity = Math.min(1, rainMax / 100);
+  const windIntensity = Math.min(1, wind / 50);
+  const dropCount = Math.max(4, Math.round(rainMax / 5));
+  const lineCount = Math.max(6, Math.round(wind / 2));
+
+  const layers = [
+    { id: "temperature", label: "Temperature" },
+    { id: "rainfall", label: "Rainfall" },
+    { id: "wind", label: "Wind" },
+  ];
+
   return (
     <section className="panel map-panel" data-testid="weather-map">
       <div className="section-title">
         <div><span className="eyebrow">WEATHER LAYERS · SELECTED LOCATION</span><h2>Weather map</h2></div>
         <button className="map-location" data-testid="map-location-button"><MapPin size={15} /> {location}</button>
       </div>
-      <div className="map-canvas">
+      <div
+        className={`map-canvas map-layer-${layer}`}
+        data-testid={`map-canvas-${layer}`}
+        data-active-layer={layer}
+        style={{
+          "--temp-intensity": tempIntensity,
+          "--rain-intensity": rainIntensity,
+          "--wind-intensity": windIntensity,
+        }}
+      >
         <div className="map-grid" />
-        <div className="map-road road-one" /><div className="map-road road-two" />
-        <div className="radar radar-one" /><div className="radar radar-two" />
+        <div className="map-road road-one" />
+        <div className="map-road road-two" />
+
+        {layer === "temperature" && (
+          <>
+            <div className="temp-heatmap" aria-hidden="true" />
+            <div className="temp-band cold" aria-hidden="true" />
+            <div className="temp-band warm" aria-hidden="true" />
+            <div className="map-value-chip" data-testid="map-value-chip">
+              <Thermometer size={14} /> {temp != null ? `${Math.round(temp)}°C` : "—"}
+            </div>
+          </>
+        )}
+
+        {layer === "rainfall" && (
+          <>
+            <div className="rain-blobs" aria-hidden="true">
+              {Array.from({ length: 8 }, (_, i) => (
+                <i key={i} style={{ left: `${8 + (i * 12) % 84}%`, top: `${(i * 19) % 78}%`, animationDelay: `-${i * 0.4}s` }} />
+              ))}
+            </div>
+            <div className="rain-drops" aria-hidden="true">
+              {Array.from({ length: dropCount }, (_, i) => (
+                <i key={i} style={{ left: `${5 + (i * 7) % 92}%`, animationDelay: `-${(i % 5) * 0.25}s`, animationDuration: `${1.6 + (i % 3) * 0.2}s` }} />
+              ))}
+            </div>
+            <div className="map-value-chip" data-testid="map-value-chip">
+              <CloudRain size={14} /> {Math.round(rainMax)}% · {rainMm24.toFixed(1)} mm/24h
+            </div>
+          </>
+        )}
+
+        {layer === "wind" && (
+          <>
+            <div className="wind-lines" aria-hidden="true">
+              {Array.from({ length: lineCount }, (_, i) => (
+                <i key={i} style={{
+                  top: `${(i * 11) % 92}%`,
+                  animationDelay: `-${(i % 6) * 0.5}s`,
+                  animationDuration: `${Math.max(1.2, 3.5 - windIntensity * 2)}s`,
+                  width: `${28 + (i % 4) * 10}px`,
+                }} />
+              ))}
+            </div>
+            <div className="map-value-chip" data-testid="map-value-chip">
+              <Wind size={14} /> {Math.round(wind)} km/h
+            </div>
+          </>
+        )}
+
         <div className="map-pin"><MapPin size={22} /><span data-testid="map-pin-label">{location}</span></div>
       </div>
-      <div className="layer-tabs">
-        {["Temperature", "Rainfall", "Wind", "AQI", "Satellite"].map((x) => (
-          <button className={layer === x ? "active" : ""} key={x} onClick={() => setLayer(x)} data-testid={`map-layer-${x.toLowerCase()}`}>{x}</button>
+      <div className="layer-tabs" role="tablist" data-testid="map-layer-tabs">
+        {layers.map((l) => (
+          <button
+            className={layer === l.id ? "active" : ""}
+            key={l.id}
+            onClick={() => setLayer(l.id)}
+            role="tab"
+            aria-selected={layer === l.id}
+            data-testid={`map-layer-${l.id}`}
+          >
+            {l.label}
+          </button>
         ))}
+        <button className="layer-unavailable" disabled data-testid="map-layer-aqi" title="AQI data not connected">AQI · N/A</button>
+        <button className="layer-unavailable" disabled data-testid="map-layer-satellite" title="Satellite feed not connected">Satellite · N/A</button>
       </div>
-      <p className="map-note" data-testid="map-note">Radar layers shown are a visual prototype until an official map provider is connected.</p>
+      <p className="map-note" data-testid="map-note">Layers are derived from the live Open-Meteo forecast for this location. This is a visual prototype until a real radar / satellite provider is connected.</p>
     </section>
   );
 }
@@ -588,11 +696,11 @@ function App() {
 
   const Lifestyle = useMemo(() => {
     if (persona.id === "fitness") return (props) => <FitnessCard insight={insight} {...props} />;
-    if (persona.id === "health") return HealthCard;
-    if (persona.id === "travel") return TravelCard;
+    if (persona.id === "health") return (props) => <HealthCard insight={insight} {...props} />;
+    if (persona.id === "travel") return (props) => <TravelCard insight={insight} location={location} {...props} />;
     if (persona.id === "beach") return BeachCard;
     return (props) => <GenericCard persona={persona} {...props} />;
-  }, [persona, insight]);
+  }, [persona, insight, location]);
 
   const navTargets = { Home: "hero-weather-card", Forecast: "hourly-forecast", Map: "weather-map", Alerts: "alerts-section", "Saved Places": "saved-places-row" };
   const navigate = (x) => {
@@ -689,7 +797,7 @@ function App() {
         <div className="lower-grid">
           <div>
             {modules.hourly && <Hourly weather={weather} timezone={timezone} onViewAll={() => setShowHourlyDetail(true)} />}
-            {modules.map && <WeatherMap location={location} />}
+            {modules.map && <WeatherMap location={location} weather={weather} />}
           </div>
           <div>
             {modules.weekly && <Weekly weather={weather} />}

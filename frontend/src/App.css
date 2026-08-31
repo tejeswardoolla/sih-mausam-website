@@ -76,3 +76,77 @@ body[data-theme="midnight"] .sun-row b{color:#f3f8ff}
 body[data-theme="imd"] .map-note{color:#547084}
 body[data-theme="midnight"] .map-note{color:#a8c1dd}
 @media(max-width:600px){.hourly-detail{padding:20px;border-radius:20px}.hourly-detail h2{font-size:22px}.hourly-detail-row{grid-template-columns:52px 20px 1fr 40px 54px;gap:6px;padding:10px}.hourly-detail-row .wind-chip{display:none}}
+
+/* --- Health card v2 (Today's Health Insight + real metrics + secondary env data) --- */
+.health-card-v2{padding:27px;background:rgba(48,14,20,.62);color:#fff;display:flex;flex-direction:column;gap:16px}
+.health-card-v2 h2{color:#fff}
+.health-status{padding:6px 12px;border-radius:20px;font:700 10px 'DM Mono';letter-spacing:1.4px;background:rgba(255,236,220,.18);color:#ffd7a8;white-space:nowrap}
+.health-status.status-comfortable{background:rgba(120,220,160,.18);color:#a8f0c2}
+.health-status.status-caution{background:rgba(255,190,90,.18);color:#ffd7a8}
+.health-status.status-heat-risk{background:rgba(255,120,80,.22);color:#ffc7ad}
+.health-status.status-rain-risk{background:rgba(120,180,255,.18);color:#b8dcff}
+.health-status.status-high-humidity{background:rgba(160,200,255,.18);color:#c8e0ff}
+.health-status.status-live{background:rgba(255,236,220,.16);color:#ffd7a8}
+.health-insight-message{margin:0;color:#f6c0a5;font-size:12px;line-height:1.6}
+.health-metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.health-metric{background:rgba(255,240,224,.08);border:1px solid rgba(255,225,204,.16);border-radius:14px;padding:12px 10px;display:grid;grid-template-columns:18px 1fr;column-gap:6px;align-items:center;backdrop-filter:blur(6px)}
+.health-metric svg{grid-row:span 2;color:#ff9eae}
+.health-metric small{font-size:9.5px;color:#e0b6a3;letter-spacing:.6px;text-transform:uppercase}
+.health-metric b{font-size:14px;color:#fff}
+.health-env-secondary{border-top:1px solid rgba(255,225,204,.16);padding-top:12px;display:grid;gap:6px}
+.health-env-secondary .eyebrow{color:#e0b6a3}
+.health-env-row{display:flex;gap:18px;font-size:11px;color:#e0b6a3;flex-wrap:wrap}
+.health-env-row span{display:flex;align-items:center;gap:5px}
+.health-env-row b{color:#f6c0a5;font-weight:600;font-size:11px;letter-spacing:.3px}
+.alert-note-small{margin:0;font-size:10px;color:#c89583;letter-spacing:.2px}
+body[data-theme="imd"] .health-card-v2{background:#fff;color:#123247}
+body[data-theme="imd"] .health-card-v2 h2{color:#123247}
+body[data-theme="imd"] .health-insight-message{color:#547084}
+body[data-theme="imd"] .health-metric{background:#eef7fb;border-color:#d5e6ee}
+body[data-theme="imd"] .health-metric small{color:#547084}
+body[data-theme="imd"] .health-metric b{color:#123247}
+body[data-theme="imd"] .health-metric svg{color:#075b91}
+body[data-theme="imd"] .health-env-secondary{border-color:#dfebf0}
+body[data-theme="imd"] .health-env-row{color:#547084}
+body[data-theme="imd"] .health-env-row b{color:#123247}
+body[data-theme="imd"] .health-env-secondary .eyebrow,body[data-theme="imd"] .alert-note-small{color:#547084}
+body[data-theme="midnight"] .health-card-v2{background:rgba(13,27,49,.82);color:#f3f8ff}
+body[data-theme="midnight"] .health-card-v2 h2{color:#f3f8ff}
+body[data-theme="midnight"] .health-insight-message{color:#a8c1dd}
+body[data-theme="midnight"] .health-metric{background:rgba(20,41,71,.8);border-color:rgba(181,211,244,.18)}
+body[data-theme="midnight"] .health-metric small{color:#a8c1dd}
+body[data-theme="midnight"] .health-metric b{color:#f3f8ff}
+body[data-theme="midnight"] .health-metric svg{color:#7fb4ff}
+body[data-theme="midnight"] .health-env-secondary{border-color:rgba(181,211,244,.14)}
+body[data-theme="midnight"] .health-env-row{color:#a8c1dd}
+body[data-theme="midnight"] .health-env-row b{color:#f3f8ff}
+body[data-theme="midnight"] .health-env-secondary .eyebrow,body[data-theme="midnight"] .alert-note-small{color:#a8c1dd}
+@media(max-width:600px){.health-metric-grid{grid-template-columns:repeat(2,1fr)}.health-env-row{gap:12px}}
+
+/* --- Travel card best-window chip variant --- */
+.best-window-chip.muted{background:rgba(255,225,204,.12);color:#e0b6a3}
+body[data-theme="imd"] .best-window-chip.muted{background:#eef2f6;color:#5c7686}
+body[data-theme="midnight"] .best-window-chip.muted{background:rgba(160,200,255,.12);color:#a8c1dd}
+
+/* --- Weather Map: functional Temperature / Rainfall / Wind layers --- */
+.map-canvas{transition:background .35s ease}
+.map-canvas.map-layer-temperature{background:linear-gradient(135deg,hsl(calc(220 - var(--temp-intensity,.5) * 220), 65%, 48%),hsl(calc(50 - var(--temp-intensity,.5) * 30), 75%, 55%))}
+.map-canvas.map-layer-rainfall{background:linear-gradient(160deg,#1e3f5f,#0f6c81 55%,#4a97a8)}
+.map-canvas.map-layer-wind{background:linear-gradient(155deg,#40607d 0%,#587e93 55%,#88b0c4 100%)}
+.temp-heatmap{position:absolute;inset:0;background:radial-gradient(circle at 30% 45%,rgba(255,255,255,.32),transparent 55%),radial-gradient(circle at 70% 68%,rgba(255,220,120,.32),transparent 60%);mix-blend-mode:screen;pointer-events:none;opacity:calc(.6 + var(--temp-intensity,.5) * .4)}
+.temp-band{position:absolute;left:-10%;right:-10%;height:12%;filter:blur(18px);pointer-events:none}
+.temp-band.cold{top:6%;background:rgba(120,180,255,.6)}
+.temp-band.warm{bottom:8%;background:rgba(255,140,80,calc(.35 + var(--temp-intensity,.5) * .35))}
+.rain-blobs{position:absolute;inset:0;pointer-events:none}
+.rain-blobs i{position:absolute;width:80px;height:60px;border-radius:50%;background:radial-gradient(circle,rgba(180,220,255,calc(.35 + var(--rain-intensity,.3) * .45)) 0 30%,transparent 70%);animation:rainBlobDrift 8s ease-in-out infinite;filter:blur(6px)}
+.rain-drops{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.rain-drops i{position:absolute;top:-14%;width:2px;height:26px;background:linear-gradient(180deg,transparent,rgba(220,240,255,calc(.55 + var(--rain-intensity,.3) * .35)));transform:rotate(12deg);animation:mapRainFall linear infinite}
+.wind-lines{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.wind-lines i{position:absolute;left:-15%;height:2px;background:linear-gradient(90deg,transparent,rgba(220,240,255,calc(.4 + var(--wind-intensity,.3) * .5)),transparent);border-radius:2px;animation:mapWindFlow linear infinite}
+.map-value-chip{position:absolute;left:16px;bottom:14px;display:flex;align-items:center;gap:6px;padding:7px 11px;border-radius:20px;background:rgba(15,20,30,.55);color:#fff;font:600 11px Manrope;letter-spacing:.2px;backdrop-filter:blur(8px);z-index:2}
+body[data-theme="imd"] .map-value-chip{background:rgba(20,50,80,.72)}
+.layer-unavailable{opacity:.5;cursor:not-allowed !important;text-decoration:line-through}
+.map-canvas .map-pin{z-index:3}
+@keyframes rainBlobDrift{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(24px,-8px,0) scale(1.1)}}
+@keyframes mapRainFall{0%{transform:translate3d(0,-30px,0) rotate(12deg);opacity:0}18%{opacity:1}100%{transform:translate3d(-22px,320px,0) rotate(12deg);opacity:0}}
+@keyframes mapWindFlow{0%{transform:translate3d(0,0,0);opacity:0}20%{opacity:1}100%{transform:translate3d(140vw,0,0);opacity:0}}

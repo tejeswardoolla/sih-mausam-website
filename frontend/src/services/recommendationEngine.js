@@ -2,11 +2,17 @@
 // Consumes normalized Open-Meteo weather and returns a structured insight
 // that combines current conditions with the next 6–12 hourly rows.
 
-import { findNowIndex, formatHourLabel, getLocalParts, isWeekend } from "./weatherFormatters";
+import { findNowIndex, formatHourLabel, formatSunTime, getLocalParts, isWeekend } from "./weatherFormatters";
 
 function safeNum(value, fallback = 0) {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
+}
+
+function safeHour(iso) {
+  if (!iso || iso.length < 13) return null;
+  const h = Number(iso.slice(11, 13));
+  return Number.isFinite(h) ? h : null;
 }
 
 function summarise(rows) {
@@ -21,6 +27,13 @@ function summarise(rows) {
     hasStorm: rows.some((r) => r.condition === "storm"),
     hasRain: rows.some((r) => r.condition === "rain"),
   };
+}
+
+function filterByHourRange(rows, minHourInclusive, maxHourExclusive) {
+  return rows.filter((r) => {
+    const h = Number((r.time || "").slice(11, 13));
+    return h >= minHourInclusive && h < maxHourExclusive;
+  });
 }
 
 function bestOutdoorWindow(rows, { minTemp = 12, maxTemp = 32, rainCap = 30, windCap = 28, span = 3 } = {}) {
@@ -116,28 +129,43 @@ export function buildRecommendation(personaId, weather, place) {
       const hotSpell = next12.filter((r) => safeNum(r.temperature_c) >= 34).length;
       const humidNow = safeNum(cur.humidity);
       const humidHigh = humidNow >= 78 || Math.max(...next6.map((r) => safeNum(r.humidity))) >= 80;
-      if (hotSpell >= 2 || humidHigh) {
+      const rainSoon = s6.maxRain >= 55;
+      const feels = safeNum(cur.feels_like_c, curTemp);
+      let status = "Comfortable";
+      if (cur.condition === "storm" || s6.hasStorm) status = "Caution";
+      else if (hotSpell >= 2 || feels >= 36) status = "Heat Risk";
+      else if (rainSoon) status = "Rain Risk";
+      else if (humidHigh) status = "High Humidity";
+      else if (curWind >= 30) status = "Caution";
+
+      if (hotSpell >= 2 || humidHigh || rainSoon || feels >= 36) {
         return {
           severity: "watch",
-          headline: humidHigh ? "Muggy stretch ahead" : "Heat load rising",
-          message: humidHigh
-            ? `Humidity stays elevated (peaking near ${Math.round(Math.max(...next6.map((r) => safeNum(r.humidity))))}%). Pace outdoor time and hydrate frequently.`
-            : `Temperature is expected to climb above 34° for ${hotSpell} of the next 12 hours. Shift errands to the cooler morning or evening.`,
-          bestWindow: null,
+          status,
+          headline: rainSoon ? "Rain probability rising soon"
+            : humidHigh ? "Muggy stretch ahead"
+            : "Heat load rising",
+          message: rainSoon
+            ? `Rain probability reaches ${Math.round(s6.maxRain)}% within 6 hours. Consider indoor activity or reschedule outdoor plans.`
+            : humidHigh
+              ? `Humidity stays elevated (peaking near ${Math.round(Math.max(...next6.map((r) => safeNum(r.humidity))))}%). Stay hydrated during outdoor activity.`
+              : `Feels-like climbs to ${Math.round(Math.max(...next12.map((r) => safeNum(r.feels_like_c, safeNum(r.temperature_c)))))}° in the next 12 hours. Limit prolonged outdoor activity during the hottest part of the day.`,
+          bestWindow: bestFit ? windowLabel(bestFit) : null,
           whyMetrics: [
-            metric("temp", "Peak temp (12h)", `${Math.round(s12.maxTemp)}°C`),
+            metric("temp", "Feels like", `${Math.round(feels)}°C`),
             metric("humidity", "Humidity now", `${Math.round(humidNow)}%`),
-            metric("rain", "Rain (12h)", `${Math.round(s12.maxRain)}%`),
+            metric("rain", "Rain (6h)", `${Math.round(s6.maxRain)}%`),
           ],
         };
       }
       return {
         severity: "info",
-        headline: "Environment is manageable",
-        message: `Air feels around ${Math.round(safeNum(cur.feels_like_c, curTemp))}° with ${Math.round(humidNow)}% humidity. Standard precautions are enough; AQI, pollen and UV are not sourced in the current feed.`,
-        bestWindow: null,
+        status,
+        headline: local.hour < 12 ? "Comfortable outdoor conditions this morning" : "Environment is manageable",
+        message: `Air feels around ${Math.round(feels)}° with ${Math.round(humidNow)}% humidity and ${Math.round(curWind)} km/h wind. Standard precautions are enough.`,
+        bestWindow: bestFit ? windowLabel(bestFit) : null,
         whyMetrics: [
-          metric("temp", "Feels like", `${Math.round(safeNum(cur.feels_like_c, curTemp))}°C`),
+          metric("temp", "Feels like", `${Math.round(feels)}°C`),
           metric("humidity", "Humidity", `${Math.round(humidNow)}%`),
           metric("wind", "Wind", `${Math.round(curWind)} km/h`),
         ],
@@ -145,12 +173,16 @@ export function buildRecommendation(personaId, weather, place) {
     }
     case "travel": {
       const heavy = next24.reduce((s, r) => s + safeNum(r.precipitation_mm), 0);
+      const sunriseHour = safeHour(weather?.current?.sunrise) ?? 6;
+      const sunsetHour = safeHour(weather?.current?.sunset) ?? 19;
+      const daylightRows = filterByHourRange(rows, sunriseHour, sunsetHour);
+      const bestTravel = bestOutdoorWindow(daylightRows, { minTemp: 10, maxTemp: 36, rainCap: 35, windCap: 32, span: 3 });
       if (s12.maxRain >= 60 || heavy >= 10) {
         return {
           severity: "watch",
-          headline: "Pack rain protection",
-          message: `Rain risk peaks at ${Math.round(s12.maxRain)}% within the next 12 hours (~${heavy.toFixed(1)} mm total in 24h). Keep travel documents in a waterproof pouch.`,
-          bestWindow: null,
+          headline: "Carry rain protection",
+          message: `Rain probability climbs to ${Math.round(s12.maxRain)}% within the next 12 hours (~${heavy.toFixed(1)} mm expected in 24h). Keep travel documents in a waterproof pouch.`,
+          bestWindow: bestTravel ? windowLabel(bestTravel) : null,
           whyMetrics: [
             metric("rain", "Peak rain (12h)", `${Math.round(s12.maxRain)}%`),
             metric("rain", "Total 24h", `${heavy.toFixed(1)} mm`),
@@ -158,11 +190,26 @@ export function buildRecommendation(personaId, weather, place) {
           ],
         };
       }
+      if (s12.maxWind >= 30) {
+        return {
+          severity: "watch",
+          headline: "Stronger winds expected",
+          message: `Winds pick up to ${Math.round(s12.maxWind)} km/h during your journey window. Secure loose items and expect slower travel.`,
+          bestWindow: bestTravel ? windowLabel(bestTravel) : null,
+          whyMetrics: [
+            metric("wind", "Peak wind (12h)", `${Math.round(s12.maxWind)} km/h`),
+            metric("rain", "Rain (12h)", `${Math.round(s12.maxRain)}%`),
+            metric("temp", "Temperature", `${Math.round(curTemp)}°C`),
+          ],
+        };
+      }
       return {
         severity: "info",
-        headline: "Travel window looks steady",
-        message: `Conditions stay near ${Math.round(curTemp)}° with rain risk under ${Math.round(s12.maxRain)}%. Pack light layers for changing weather.`,
-        bestWindow: bestFit ? windowLabel(bestFit) : null,
+        headline: "Good travel conditions",
+        message: bestTravel
+          ? `Weather stays mostly stable — around ${Math.round(curTemp)}° with rain risk under ${Math.round(s12.maxRain)}%. Best travel stretch: ${windowLabel(bestTravel)}.`
+          : `Weather stays mostly stable — around ${Math.round(curTemp)}° with rain risk under ${Math.round(s12.maxRain)}%. Travel any time in daylight; no clear travel window stood out.`,
+        bestWindow: bestTravel ? windowLabel(bestTravel) : null,
         whyMetrics: commonMetrics,
       };
     }
@@ -216,29 +263,97 @@ export function buildRecommendation(personaId, weather, place) {
       };
     }
     case "agriculture": {
+      // Practical field-work logic: never recommend nighttime as a default window.
+      // Use actual sunrise/sunset to bound daylight, then score practical daylight rows.
+      const sunriseHour = safeHour(weather?.current?.sunrise) ?? 6;
+      const sunsetHour = safeHour(weather?.current?.sunset) ?? 18;
+      const sunriseLabel = formatSunTime(weather?.current?.sunrise);
+      const sunsetLabel = formatSunTime(weather?.current?.sunset);
+      const daylightRemaining = filterByHourRange(rows, Math.max(local.hour, sunriseHour), sunsetHour);
+      const daylightToday = filterByHourRange(weather.hourly || [], sunriseHour, sunsetHour);
       const mm24 = next24.reduce((s, r) => s + safeNum(r.precipitation_mm), 0);
-      if (mm24 >= 12) {
+      const peakRainDaylight = daylightToday.length ? Math.max(...daylightToday.map((r) => safeNum(r.precipitation_probability))) : s24.maxRain;
+
+      // If daylight is already over for today, point to tomorrow morning.
+      if (local.hour >= sunsetHour || daylightRemaining.length < 2) {
         return {
-          severity: "watch",
-          headline: "Meaningful rain in the pipeline",
-          message: `Expect roughly ${mm24.toFixed(1)} mm across the next 24 hours (peak probability ${Math.round(s24.maxRain)}%). Hold irrigation and prepare drainage for low-lying plots.`,
+          severity: "info",
+          headline: "Daylight has closed for today",
+          message: `Field work is best resumed after sunrise (~${sunriseLabel}). Overnight rainfall total is ~${mm24.toFixed(1)} mm; plan drainage checks if needed.`,
           bestWindow: null,
           whyMetrics: [
+            metric("temp", "Overnight low", `${Math.round(s24.minTemp)}°C`),
             metric("rain", "Rain total (24h)", `${mm24.toFixed(1)} mm`),
-            metric("rain", "Peak probability", `${Math.round(s24.maxRain)}%`),
-            metric("temp", "Air temp", `${Math.round(curTemp)}°C`),
+            metric("wind", "Peak wind", `${Math.round(s24.maxWind)} km/h`),
           ],
         };
       }
+
+      // Score practical daylight segments (morning / midday / evening) using real weather.
+      const segments = [
+        { name: "morning", label: "Morning field work", start: Math.max(sunriseHour, 6), end: 10 },
+        { name: "midday", label: "Daytime field work", start: 10, end: 16 },
+        { name: "evening", label: "Evening field work", start: 16, end: Math.min(sunsetHour, 19) },
+      ]
+        .filter((seg) => seg.end > seg.start && seg.end > local.hour)
+        .map((seg) => {
+          const segStart = Math.max(seg.start, local.hour);
+          const segRows = filterByHourRange(rows, segStart, seg.end);
+          if (!segRows.length) return null;
+          const rain = Math.max(...segRows.map((r) => safeNum(r.precipitation_probability)));
+          const wind = Math.max(...segRows.map((r) => safeNum(r.wind_kmh)));
+          const temps = segRows.map((r) => safeNum(r.temperature_c));
+          const feels = segRows.map((r) => safeNum(r.feels_like_c, safeNum(r.temperature_c)));
+          const avgTemp = temps.reduce((s, v) => s + v, 0) / temps.length;
+          const peakTemp = Math.max(...temps);
+          const peakFeels = Math.max(...feels);
+          const hasStorm = segRows.some((r) => r.condition === "storm");
+          // Penalize storms, heavy rain, extreme heat/wind; reward cool + dry + calm daylight.
+          const score = 100
+            - (hasStorm ? 60 : 0)
+            - rain * 0.9
+            - Math.max(0, peakTemp - 34) * 6
+            - Math.max(0, wind - 24) * 2
+            - Math.max(0, 12 - avgTemp) * 3;
+          return { ...seg, segStart, rain, wind, avgTemp, peakTemp, peakFeels, hasStorm, score, start: segRows[0].time, endTime: segRows[segRows.length - 1].time };
+        })
+        .filter(Boolean);
+
+      const usable = segments.filter((seg) => !seg.hasStorm && seg.rain <= 55 && seg.wind <= 34 && seg.peakTemp <= 40);
+      const best = usable.reduce((b, seg) => (!b || seg.score > b.score ? seg : b), null);
+
+      if (best) {
+        const label = windowLabel({ start: best.start, end: best.endTime });
+        return {
+          severity: mm24 >= 12 ? "watch" : "info",
+          headline: "Better field-work window",
+          message: `${label} looks practical for field work — around ${Math.round(best.avgTemp)}° with ${Math.round(best.rain)}% rain risk during daylight hours.${mm24 >= 12 ? ` Around ${mm24.toFixed(1)} mm expected in 24h, prepare drainage.` : ""}`,
+          bestWindow: label,
+          whyMetrics: [
+            metric("temp", "Window temp", `${Math.round(best.avgTemp)}°C`),
+            metric("rain", "Rain in window", `${Math.round(best.rain)}%`),
+            metric("wind", "Wind in window", `${Math.round(best.wind)} km/h`),
+          ],
+        };
+      }
+
+      // No usable segment — explain the real reason honestly.
+      const reason = segments.some((seg) => seg.hasStorm)
+        ? "Thunderstorm conditions are expected during daylight hours."
+        : peakRainDaylight >= 55
+          ? `Rain probability climbs to ${Math.round(peakRainDaylight)}% across daylight hours.`
+          : segments.some((seg) => seg.wind > 34)
+            ? `Winds peak above ${Math.round(Math.max(...segments.map((s) => s.wind)))} km/h during daylight.`
+            : `Daylight peaks around ${Math.round(Math.max(...segments.map((s) => s.peakTemp)))}° which is intense for prolonged outdoor work.`;
       return {
-        severity: "info",
-        headline: "Calmer field window",
-        message: `Only ~${mm24.toFixed(1)} mm of rain expected in the next 24 hours. Suitable for planned field work; use the outlook to time irrigation and spraying.`,
-        bestWindow: bestFit ? windowLabel(bestFit) : null,
+        severity: "watch",
+        headline: "No clear field-work window today",
+        message: `${reason} Reschedule non-urgent field work; daylight ends around ${sunsetLabel}.`,
+        bestWindow: null,
         whyMetrics: [
-          metric("rain", "Rain total (24h)", `${mm24.toFixed(1)} mm`),
-          metric("temp", "Peak temp (24h)", `${Math.round(s24.maxTemp)}°C`),
-          metric("wind", "Peak wind", `${Math.round(s24.maxWind)} km/h`),
+          metric("rain", "Peak rain (daylight)", `${Math.round(peakRainDaylight)}%`),
+          metric("temp", "Peak temp (daylight)", `${Math.round(daylightToday.length ? Math.max(...daylightToday.map((r) => safeNum(r.temperature_c))) : s24.maxTemp)}°C`),
+          metric("wind", "Peak wind (daylight)", `${Math.round(daylightToday.length ? Math.max(...daylightToday.map((r) => safeNum(r.wind_kmh))) : s24.maxWind)} km/h`),
         ],
       };
     }
