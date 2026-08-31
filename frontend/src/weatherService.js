@@ -17,11 +17,3 @@ export function weatherIcon(condition, isDay = true) {
   if (!isDay && ["sunny", "partly-cloudy"].includes(condition)) return "night";
   return condition || "cloudy";
 }
-
-export function formatHour(value, timezone) {
-  try { return new Intl.DateTimeFormat("en-IN", { hour: "numeric", hour12: true, timeZone: timezone || undefined }).format(new Date(value)); } catch { return value?.slice(11, 16) || "—"; }
-}
-
-export function formatDay(value, timezone) {
-  try { return new Intl.DateTimeFormat("en-IN", { weekday: "short", timeZone: timezone || undefined }).format(new Date(`${value}T12:00:00`)); } catch { return value?.slice(5) || "—"; }
-}

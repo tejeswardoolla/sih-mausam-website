@@ -59,49 +59,82 @@ async def fetch_weather(latitude: float, longitude: float, location: str) -> dic
     params = {
         "latitude": latitude, "longitude": longitude, "timezone": "auto", "forecast_days": 7,
         "current": "temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,is_day",
-        "hourly": "temperature_2m,precipitation_probability,precipitation,wind_speed_10m,weather_code",
-        "daily": "temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code",
+        "hourly": "temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,wind_speed_10m,weather_code,is_day",
+        "daily": "temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,weather_code,sunrise,sunset",
     }
     async with httpx.AsyncClient(timeout=10) as client:
         response = await client.get(FORECAST_URL, params=params)
         response.raise_for_status()
         raw = response.json()
+
     current = raw.get("current", {})
-    current_condition, current_label = condition_for(current.get("weather_code"), bool(current.get("is_day", 1)))
+    current_is_day = bool(current.get("is_day", 1))
+    current_condition, current_label = condition_for(current.get("weather_code"), current_is_day)
+
     hourly_raw = raw.get("hourly", {})
-    hourly = []
-    for index, timestamp in enumerate(hourly_raw.get("time", [])[:24]):
-        code = hourly_raw.get("weather_code", [None] * 24)[index]
-        condition, label = condition_for(code, True)
+    hourly_times = hourly_raw.get("time", [])
+    hourly: list[dict[str, Any]] = []
+    for index, timestamp in enumerate(hourly_times[:24]):
+        code = _pick(hourly_raw, "weather_code", index)
+        is_day_hour = bool(_pick(hourly_raw, "is_day", index, default=1))
+        condition, label = condition_for(code, is_day_hour)
         hourly.append({
-            "time": timestamp, "temperature_c": hourly_raw.get("temperature_2m", [None] * 24)[index],
-            "precipitation_probability": hourly_raw.get("precipitation_probability", [0] * 24)[index],
-            "precipitation_mm": hourly_raw.get("precipitation", [0] * 24)[index],
-            "wind_kmh": hourly_raw.get("wind_speed_10m", [0] * 24)[index],
-            "weather_code": code, "condition": condition, "condition_label": label,
+            "time": timestamp,
+            "temperature_c": _pick(hourly_raw, "temperature_2m", index),
+            "humidity": _pick(hourly_raw, "relative_humidity_2m", index),
+            "precipitation_probability": _pick(hourly_raw, "precipitation_probability", index, default=0),
+            "precipitation_mm": _pick(hourly_raw, "precipitation", index, default=0),
+            "wind_kmh": _pick(hourly_raw, "wind_speed_10m", index, default=0),
+            "weather_code": code, "is_day": 1 if is_day_hour else 0,
+            "condition": condition, "condition_label": label,
         })
+
     daily_raw = raw.get("daily", {})
-    daily = []
+    daily: list[dict[str, Any]] = []
     for index, date in enumerate(daily_raw.get("time", [])):
-        code = daily_raw.get("weather_code", [None] * 7)[index]
+        code = _pick(daily_raw, "weather_code", index)
         condition, label = condition_for(code, True)
         daily.append({
-            "date": date, "high_c": daily_raw.get("temperature_2m_max", [None] * 7)[index],
-            "low_c": daily_raw.get("temperature_2m_min", [None] * 7)[index],
-            "rain_probability": daily_raw.get("precipitation_probability_max", [0] * 7)[index],
+            "date": date,
+            "high_c": _pick(daily_raw, "temperature_2m_max", index),
+            "low_c": _pick(daily_raw, "temperature_2m_min", index),
+            "rain_probability": _pick(daily_raw, "precipitation_probability_max", index, default=0),
+            "precipitation_sum_mm": _pick(daily_raw, "precipitation_sum", index, default=0),
+            "sunrise": _pick(daily_raw, "sunrise", index),
+            "sunset": _pick(daily_raw, "sunset", index),
             "weather_code": code, "condition": condition, "condition_label": label,
         })
+
     normalized = {
         "location": {"name": location, "latitude": latitude, "longitude": longitude},
-        "timezone": raw.get("timezone", "auto"), "source": "open-meteo",
+        "timezone": raw.get("timezone", "auto"),
+        "timezone_abbreviation": raw.get("timezone_abbreviation"),
+        "utc_offset_seconds": raw.get("utc_offset_seconds"),
+        "source": "open-meteo",
+        "fetched_at": datetime.now(timezone.utc).isoformat(),
         "updated_at": datetime.now(timezone.utc).isoformat(),
         "current": {
-            "temperature_c": current.get("temperature_2m"), "feels_like_c": current.get("apparent_temperature"),
-            "humidity": current.get("relative_humidity_2m"), "wind_kmh": current.get("wind_speed_10m"),
-            "precipitation_mm": current.get("precipitation", 0), "weather_code": current.get("weather_code"),
-            "is_day": current.get("is_day", 1), "condition": current_condition, "condition_label": current_label,
+            "temperature_c": current.get("temperature_2m"),
+            "feels_like_c": current.get("apparent_temperature"),
+            "humidity": current.get("relative_humidity_2m"),
+            "wind_kmh": current.get("wind_speed_10m"),
+            "precipitation_mm": current.get("precipitation", 0),
+            "weather_code": current.get("weather_code"),
+            "is_day": 1 if current_is_day else 0,
+            "condition": current_condition, "condition_label": current_label,
+            "sunrise": daily[0]["sunrise"] if daily else None,
+            "sunset": daily[0]["sunset"] if daily else None,
+            "observed_at": current.get("time"),
         },
         "hourly": hourly, "daily": daily,
     }
     _forecast_cache[cache_key] = (time.time() + 300, normalized)
     return normalized
+
+
+def _pick(source: dict[str, Any], key: str, index: int, default: Any = None) -> Any:
+    series = source.get(key)
+    if not isinstance(series, list) or index >= len(series):
+        return default
+    value = series[index]
+    return default if value is None else value

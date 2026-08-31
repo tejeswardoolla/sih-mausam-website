@@ -22,3 +22,57 @@ body[data-theme="editorial"] .topbar{background:rgba(17,47,51,.38);border-color:
 body[data-theme="editorial"] .topbar nav.open{background:rgba(12,39,43,.94);border:1px solid rgba(217,246,239,.2)}body[data-theme="editorial"] .topbar nav.open button{color:#e7faf4}body[data-theme="editorial"] .topbar nav.open button:hover,body[data-theme="editorial"] .topbar nav.open .nav-active{background:rgba(205,242,232,.16);color:#fff}
 @media(max-width:600px){.topbar nav.open{position:fixed;top:66px;left:25px;right:auto;width:100vw;max-width:100vw;margin:0;padding:12px 17px;transform:none}}
 .hero-condition{display:flex;align-items:center;gap:6px}.weather-inline-error{margin:-8px 0 17px;border:1px solid rgba(255,209,173,.25);background:rgba(111,36,26,.3);color:#ffe0c5;border-radius:10px;padding:10px 13px;font-size:11px}.important-section{margin-top:18px;padding:22px 25px;border:1px solid rgba(219,247,241,.2);border-radius:20px;background:rgba(18,52,56,.42);box-shadow:0 18px 45px rgba(2,23,26,.18);backdrop-filter:blur(14px)}.important-heading{display:flex;align-items:flex-start;justify-content:space-between}.important-heading h2{margin:8px 0 0;font-size:20px;letter-spacing:-.8px}.live-chip{font:500 9px 'DM Mono';letter-spacing:.8px;padding:7px 9px;border-radius:20px;background:rgba(183,235,201,.13);color:#d2f5d6}.recommendation-row{display:flex;align-items:center;gap:12px;margin-top:18px;padding:14px;border-radius:14px;background:rgba(208,245,235,.1);border:1px solid rgba(218,247,239,.14)}.recommendation-icon{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:rgba(203,241,205,.16);color:#d8f2b1;flex:none}.recommendation-row b,.recommendation-row span{display:block}.recommendation-row b{font-size:12px;line-height:1.5;color:#f1fff8}.recommendation-row span{font-size:10px;color:#b7dcd4;margin-top:4px}.recommendation-metrics{display:flex;gap:22px;margin-top:15px;color:#b9ddd5;font-size:10px}.recommendation-metrics span{display:flex;align-items:center;gap:5px}.recommendation-metrics svg{color:#b4ebcb}.recommendation-metrics b{color:#f2fff7;margin-left:2px}.search-spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.22);border-top-color:#d6f1dc;border-radius:50%;animation:spin .8s linear infinite;display:inline-block}@keyframes spin{to{transform:rotate(360deg)}}.weather-motion[data-weather-state="sunny"] .rain-layer,.weather-motion[data-weather-state="partly-cloudy"] .rain-layer,.weather-motion[data-weather-state="cloudy"] .rain-layer,.weather-motion[data-weather-state="fog"] .rain-layer,.weather-motion[data-weather-state="night"] .rain-layer{display:none}.weather-motion[data-weather-state="sunny"] .lightning-flash,.weather-motion[data-weather-state="partly-cloudy"] .lightning-flash,.weather-motion[data-weather-state="cloudy"] .lightning-flash,.weather-motion[data-weather-state="fog"] .lightning-flash,.weather-motion[data-weather-state="rain"] .lightning-flash,.weather-motion[data-weather-state="night"] .lightning-flash{display:none}.weather-motion[data-weather-state="rain"] .rain-layer{opacity:.25}.weather-motion[data-weather-state="storm"] .rain-layer{opacity:.48}.weather-motion[data-weather-state="storm"] .lightning-flash{display:block;opacity:.12;animation-duration:6s}.weather-motion[data-weather-state="night"]{background:linear-gradient(rgba(7,19,43,.12),rgba(7,19,43,.26))}.hero.weather-sunny{background:linear-gradient(115deg,rgba(40,75,70,.42),rgba(23,86,81,.18)),url("https://images.unsplash.com/photo-1599209248411-5124adbb1da2") center/cover}.hero.weather-cloudy,.hero.weather-fog{background:linear-gradient(115deg,rgba(26,52,59,.78),rgba(43,82,83,.48)),url("https://images.pexels.com/photos/13987264/pexels-photo-13987264.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940") center/cover}.hero.weather-rain{background:linear-gradient(115deg,rgba(15,44,50,.82),rgba(29,74,76,.52)),url("https://images.pexels.com/photos/16140780/pexels-photo-16140780.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940") center/cover}.hero.weather-storm{background:linear-gradient(115deg,rgba(5,18,28,.86),rgba(24,59,63,.56)),url("https://images.pexels.com/photos/16140780/pexels-photo-16140780.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940") center/cover}.hero.weather-night{background:linear-gradient(115deg,rgba(6,18,44,.88),rgba(19,46,76,.64)),url("https://images.unsplash.com/photo-1519681393784-d120267933ba") center/cover}.hero.weather-sunny .globe-halo{border-color:rgba(255,225,145,.55)}.hero.weather-sunny .globe-stage{filter:saturate(.9) sepia(.16)}.hero.weather-cloudy .globe-halo,.hero.weather-fog .globe-halo{border-color:rgba(189,225,232,.45)}.hero.weather-rain .globe-halo{border-color:rgba(128,214,239,.62)}.hero.weather-storm .globe-halo{border-color:rgba(170,220,255,.78)}.hero.weather-night .globe-halo{border-color:rgba(122,163,255,.6)}@media(max-width:600px){.important-section{padding:20px 18px}.recommendation-metrics{gap:10px;flex-wrap:wrap}.important-heading h2{font-size:18px}.weather-inline-error{margin-top:-5px}}
+/* --- Mausam corrections: NOW hourly card, 24-hour modal, best-window chip, sun row --- */
+.hour.now-hour{background:linear-gradient(160deg,rgba(255,236,220,.28),rgba(255,190,140,.14));border-color:rgba(255,225,190,.55);color:#fff;box-shadow:0 12px 30px rgba(255,140,80,.22);position:relative}
+.hour.now-hour small{font-weight:800;letter-spacing:1.5px;color:#ffd7a8}
+.hour.now-hour:before{content:"";position:absolute;top:-4px;right:-4px;width:10px;height:10px;background:#ffb347;border-radius:50%;box-shadow:0 0 10px rgba(255,179,71,.7)}
+body[data-theme="imd"] .hour.now-hour{background:linear-gradient(160deg,#eaf6ff,#dcecfb);border-color:#a8caec;color:#0f3a63}
+body[data-theme="imd"] .hour.now-hour small{color:#0b558f}
+body[data-theme="midnight"] .hour.now-hour{background:linear-gradient(160deg,rgba(120,175,255,.24),rgba(80,140,220,.12));border-color:rgba(160,200,255,.5);color:#fff}
+.hourly-empty,.weekly-empty{padding:22px 6px;color:#e6b8a3;font-size:12px}
+body[data-theme="imd"] .hourly-empty,body[data-theme="imd"] .weekly-empty{color:#5c7686}
+body[data-theme="midnight"] .hourly-empty,body[data-theme="midnight"] .weekly-empty{color:#a8c1dd}
+.hourly-detail{background:#221016;color:#fff;border:1px solid rgba(255,225,204,.22);border-radius:24px;padding:24px;width:min(640px,100%);max-height:min(720px,calc(100vh - 40px));overflow:auto;box-shadow:0 30px 80px rgba(30,5,10,.5)}
+.hourly-detail .modal-head{margin-bottom:6px}
+.hourly-detail h2{font-size:26px;letter-spacing:-1.2px;margin:8px 0 6px}
+.hourly-detail-note{font-size:11px;color:#e0b6a3;margin:0 0 16px}
+.hourly-detail-list{display:grid;gap:6px}
+.hourly-detail-row{display:grid;grid-template-columns:64px 22px 1fr 44px 62px 82px;align-items:center;gap:10px;padding:12px;border-radius:12px;border:1px solid rgba(255,225,204,.14);background:rgba(255,240,224,.06);font-size:12px}
+.hourly-detail-row.now{background:rgba(255,179,71,.18);border-color:rgba(255,190,120,.4)}
+.hourly-detail-row b{font:600 11px 'DM Mono';letter-spacing:1.2px}
+.hourly-detail-row strong{font-size:15px}
+.hourly-detail-row .cond-label{color:#eabfa8;font-size:11px}
+.hourly-detail-row .rain-chance,.hourly-detail-row .wind-chip{display:flex;align-items:center;gap:5px;font-size:11px;color:#f2c8b0}
+body[data-theme="imd"] .hourly-detail{background:#fff;color:#123247;border-color:#c8dce7}
+body[data-theme="imd"] .hourly-detail-note{color:#547084}
+body[data-theme="imd"] .hourly-detail-row{background:#eef7fb;border-color:#d5e6ee;color:#123247}
+body[data-theme="imd"] .hourly-detail-row.now{background:#dcefff;border-color:#a8caec}
+body[data-theme="imd"] .hourly-detail-row .cond-label,body[data-theme="imd"] .hourly-detail-row .rain-chance,body[data-theme="imd"] .hourly-detail-row .wind-chip{color:#547084}
+body[data-theme="midnight"] .hourly-detail{background:#111d35;color:#f3f8ff;border-color:rgba(181,211,244,.2)}
+body[data-theme="midnight"] .hourly-detail-note{color:#a8c1dd}
+body[data-theme="midnight"] .hourly-detail-row{background:rgba(20,41,71,.7);border-color:rgba(181,211,244,.16);color:#f3f8ff}
+body[data-theme="midnight"] .hourly-detail-row.now{background:rgba(96,144,220,.24);border-color:rgba(160,200,255,.4)}
+body[data-theme="midnight"] .hourly-detail-row .cond-label,body[data-theme="midnight"] .hourly-detail-row .rain-chance,body[data-theme="midnight"] .hourly-detail-row .wind-chip{color:#a8c1dd}
+.best-window-chip{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:5px 10px;border-radius:20px;background:rgba(255,240,220,.18);color:#ffd7a8;font:600 10px 'DM Mono';letter-spacing:1px}
+body[data-theme="imd"] .best-window-chip{background:#eaf5fb;color:#075b91}
+body[data-theme="midnight"] .best-window-chip{background:rgba(160,200,255,.16);color:#e5f1ff}
+.recommendation-row>div:last-child{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
+.recommendation-row>div:last-child b{font-size:14px;letter-spacing:-.2px}
+.recommendation-row>div:last-child span{font-size:11px;line-height:1.5}
+.recommendation-context{margin:12px 0 0;font-size:10px;color:#e0b6a3;letter-spacing:.2px}
+body[data-theme="imd"] .recommendation-context{color:#547084}
+body[data-theme="midnight"] .recommendation-context{color:#a8c1dd}
+.severity-severe .recommendation-row{background:rgba(255,120,80,.16);border-color:rgba(255,140,90,.4)}
+.severity-watch .recommendation-row{background:rgba(255,190,90,.14);border-color:rgba(255,200,120,.3)}
+.sun-row{display:flex;gap:22px;padding:14px 0 0;margin-top:8px;border-top:1px solid rgba(255,224,204,.15);font-size:11px;color:#e6b8a3}
+.sun-row span{display:flex;align-items:center;gap:6px}
+.sun-row b{color:#fff;font-size:12px;margin-left:2px}
+body[data-theme="imd"] .sun-row{border-color:#dfebf0;color:#547084}
+body[data-theme="imd"] .sun-row b{color:#123247}
+body[data-theme="midnight"] .sun-row{border-color:rgba(181,211,244,.14);color:#a8c1dd}
+body[data-theme="midnight"] .sun-row b{color:#f3f8ff}
+.hero-summary small{display:block;font-size:11px;color:rgba(255,255,255,.7);margin-top:2px;letter-spacing:.4px}
+.map-note{margin:14px 0 0;font-size:10px;color:#e6b8a3;letter-spacing:.2px}
+body[data-theme="imd"] .map-note{color:#547084}
+body[data-theme="midnight"] .map-note{color:#a8c1dd}
+@media(max-width:600px){.hourly-detail{padding:20px;border-radius:20px}.hourly-detail h2{font-size:22px}.hourly-detail-row{grid-template-columns:52px 20px 1fr 40px 54px;gap:6px;padding:10px}.hourly-detail-row .wind-chip{display:none}}
