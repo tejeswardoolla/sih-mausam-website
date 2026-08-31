@@ -1,0 +1,31 @@
+{
+  "summary": "Frontend regression pass 3 for Mausam: hero dynamic atmosphere attributes, 7 PM recommendation cutoff across all 8 personas, farmer wording, 'Why this recommendation?' panel, weather map cleanup (AQI/Satellite removed), liquid-glass Personalize modal, central location sync (Mumbai). All acceptance criteria from the request are met. No regressions, no console errors, no mobile horizontal overflow (390x844).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "verified_features": [
+    "Hero data-testid=hero-weather-card exposes data-time-of-day=midday, data-weather-condition=cloudy, data-atmosphere=cloudy-midday and CSS --rain-i style var. For current cloudy state, rain-layer and lightning-flash are correctly absent.",
+    "Weather Map: only Temperature/Rainfall/Wind buttons render inside map-layer-tabs; map-layer-aqi and map-layer-satellite return null. Text 'AQI · N/A'/'Satellite · N/A' not present. Layer switching updates data-active-layer and map-value-chip (30°C, 14% · 0.1 mm/24h, 23 km/h).",
+    "Recommendation cutoff verified across 8 personas (via persona-switch-*). All best-window end times are <=18:00 (fitness 4-6PM, health 4-6PM, travel 3-5PM, beach 4-6PM, family 4-6PM, agriculture 4-5PM, events 4-6PM; commute no window). No '7/8/9/10/11 PM –' substrings appear in headlines/details.",
+    "Farmer persona headline matches allowed set ('Better field-work window'). Window within daylight (4-5 PM).",
+    "Why panel: recommendation-why-button present; toggles recommendation-why-panel open/close; panel contains 3 why-panel-metric-* entries, why-panel-window entry, 'Reason' text and 'rule-based, no AI' disclaimer.",
+    "Personalize modal: customize-modal has class 'customize-modal-glass'; backdrop has 'modal-backdrop-glass'. Toggle switch (Hero weather) flips state on repeated click. Save button closes modal. Mobile view also renders glass modal correctly.",
+    "Central location sync: switching to Mumbai updates hero-location, map-pin-label to 'Mumbai'; local-datetime shows Asia/Kolkata as expected.",
+    "Mobile 390x844: no horizontal overflow; hero atmosphere attributes preserved; no console errors."
+  ],
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "App.js is 929 lines — consider splitting Hero/WeatherMap/Recommendation/Modal into separate module files for maintainability.",
+    "why-panel selector count returned 3 metrics (rain/temp/wind) but request mentions humidity as a possible 4th metric — depends on insight.whyMetrics; not a bug, just note that 4th metric appears only when engine emits humidity factor."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (not tested per request)", "frontend": "100%"},
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Persona chips use data-testid='persona-switch-<id>' (not 'persona-<id>'). Onboarding modal appears on fresh load; dismiss via [data-testid=onboarding-skip-button]. All test-ids listed in review_request confirmed present."
+}

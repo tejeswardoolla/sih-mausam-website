@@ -112,19 +112,57 @@ function Onboarding({ onChoose, onSkip }) {
 
 function Hero({ location, weather, loading, localTime, greeting }) {
   const current = weather?.current;
-  const { atmosphere } = deriveAtmosphere(weather);
-  const state = atmosphere || "partly-cloudy";
+  const visual = deriveAtmosphere(weather);
+  const state = visual.atmosphere;
   const temp = current?.temperature_c;
   const feels = current?.feels_like_c;
   const status = loading ? "UPDATING WEATHER…" : current ? `LIVE CONDITIONS · ${weather?.timezone_abbreviation || weather?.timezone || "LOCAL"}` : "WEATHER UNAVAILABLE";
+  const rainCount = Math.round(6 + visual.intensity.rain * 22);
+  const showRain = visual.intensity.rain > 0;
+  const showLightning = visual.intensity.lightning > 0;
+  const showFog = visual.intensity.fog > 0;
+  const showStars = visual.isNight;
   return (
-    <motion.section layout className={`hero panel weather-${state}`} data-testid="hero-weather-card" data-weather-condition={state}>
+    <motion.section
+      layout
+      className={`hero panel weather-${visual.condition} time-${visual.timeOfDay}`}
+      data-testid="hero-weather-card"
+      data-weather-condition={visual.condition}
+      data-time-of-day={visual.timeOfDay}
+      data-atmosphere={visual.dataAtmosphere}
+      style={{
+        "--rain-i": visual.intensity.rain,
+        "--wind-i": visual.intensity.wind,
+        "--fog-i": visual.intensity.fog,
+        "--cloud-i": visual.intensity.cloud,
+      }}
+    >
       <div className="globe-stage" aria-hidden="true"><div className="globe-halo" /><img src={glassGlobeUrl} alt="" /></div>
       <div className="hero-sky">
-        <div className="sun-disc" /><div className="cloud cloud-one" /><div className="cloud cloud-two" /><div className="hero-lines" />
+        <div className="sun-disc" />
+        {visual.isNight && <div className="moon-disc" aria-hidden="true" />}
+        <div className="cloud cloud-one" />
+        <div className="cloud cloud-two" />
+        <div className="hero-lines" />
+        {showStars && (
+          <div className="stars-layer" aria-hidden="true">
+            {Array.from({ length: 24 }, (_, i) => (
+              <i key={i} style={{ left: `${(i * 13) % 96}%`, top: `${(i * 19) % 55}%`, animationDelay: `-${(i % 6) * 0.6}s` }} />
+            ))}
+          </div>
+        )}
+        {showFog && (
+          <div className="fog-layer" aria-hidden="true"><i /><i /><i /></div>
+        )}
         <div className="weather-motion" data-testid="weather-motion" data-weather-state={state}>
-          <div className="rain-layer">{Array.from({ length: 14 }, (_, i) => <i key={i} style={{ left: `${8 + (i * 7) % 90}%`, animationDelay: `-${(i % 6) * 0.55}s`, animationDuration: `${1.5 + (i % 4) * 0.28}s` }} />)}</div>
-          <div className="lightning-flash" />
+          {showRain && (
+            <div className="rain-layer" data-testid="rain-layer" data-rain-count={rainCount}>
+              {Array.from({ length: rainCount }, (_, i) => (
+                <i key={i} style={{ left: `${5 + (i * 7) % 92}%`, animationDelay: `-${(i % 6) * 0.55}s`, animationDuration: `${Math.max(0.9, 1.7 - visual.intensity.rain * 0.6 + (i % 4) * 0.15)}s` }} />
+              ))}
+            </div>
+          )}
+          {showLightning && <div className="lightning-flash" data-testid="lightning-flash" />}
         </div>
       </div>
       <div className="hero-top">
@@ -510,10 +548,8 @@ function WeatherMap({ location, weather }) {
             {l.label}
           </button>
         ))}
-        <button className="layer-unavailable" disabled data-testid="map-layer-aqi" title="AQI data not connected">AQI · N/A</button>
-        <button className="layer-unavailable" disabled data-testid="map-layer-satellite" title="Satellite feed not connected">Satellite · N/A</button>
       </div>
-      <p className="map-note" data-testid="map-note">Layers are derived from the live Open-Meteo forecast for this location. This is a visual prototype until a real radar / satellite provider is connected.</p>
+      <p className="map-note" data-testid="map-note">Layers are derived from the live Open-Meteo forecast for this location. This is a weather-data visualization prototype, not live radar/satellite imagery.</p>
     </section>
   );
 }
@@ -551,6 +587,7 @@ function Alerts({ weather, insight }) {
 }
 
 function Recommendation({ persona, insight, location, weatherSource }) {
+  const [showWhy, setShowWhy] = useState(false);
   if (!insight) {
     return (
       <section className="important-section" data-testid="important-for-you">
@@ -585,7 +622,42 @@ function Recommendation({ persona, insight, location, weatherSource }) {
           return <span key={m.label} data-testid={`why-metric-${m.icon}`}><I size={15} /> {m.label} <b>{m.value}</b></span>;
         })}
       </div>
-      <p className="recommendation-context" data-testid="recommendation-context">{location} · Based on current conditions and the next 6–12 hours</p>
+      <div className="recommendation-footer">
+        <p className="recommendation-context" data-testid="recommendation-context">{location} · Based on current conditions and the next 6–12 hours</p>
+        <button
+          type="button"
+          className="why-button"
+          data-testid="recommendation-why-button"
+          onClick={() => setShowWhy((v) => !v)}
+          aria-expanded={showWhy}
+        >
+          {showWhy ? "Hide reasoning" : "Why this recommendation?"} <ChevronDown size={12} style={{ transform: showWhy ? "rotate(180deg)" : "none", transition: "transform .2s" }} />
+        </button>
+      </div>
+      <AnimatePresence initial={false}>
+        {showWhy && (
+          <motion.div
+            className="why-panel"
+            data-testid="recommendation-why-panel"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            <div className="why-grid">
+              {insight.whyMetrics.map((m) => (
+                <div key={m.label} data-testid={`why-panel-metric-${m.icon}`}><small>{m.label}</small><b>{m.value}</b></div>
+              ))}
+              {insight.bestWindow && (
+                <div data-testid="why-panel-window"><small>Suggested window</small><b>{insight.bestWindow}</b></div>
+              )}
+              <div><small>Location</small><b>{location}</b></div>
+            </div>
+            <p className="why-reason"><b>Reason:</b> {insight.message}</p>
+            <p className="why-disclaimer">Transparent, rule-based weather reasoning from the live Open-Meteo forecast — no AI model involved.</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
@@ -832,8 +904,8 @@ function App() {
       {showHourlyDetail && <HourlyDetail weather={weather} timezone={timezone} onClose={() => setShowHourlyDetail(false)} />}
 
       {customize && (
-        <div className="modal-backdrop">
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="customize-modal">
+        <div className="modal-backdrop modal-backdrop-glass" data-testid="customize-modal-backdrop">
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="customize-modal customize-modal-glass" data-testid="customize-modal">
             <div className="modal-head">
               <div><span className="eyebrow">PERSONALIZE</span><h2>Make it yours</h2></div>
               <IconButton label="Close customization" onClick={() => setCustomize(false)} testid="close-customize-button"><X size={20} /></IconButton>

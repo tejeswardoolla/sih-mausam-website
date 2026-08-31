@@ -36,11 +36,13 @@ function filterByHourRange(rows, minHourInclusive, maxHourExclusive) {
   });
 }
 
-function bestOutdoorWindow(rows, { minTemp = 12, maxTemp = 32, rainCap = 30, windCap = 28, span = 3 } = {}) {
+function bestOutdoorWindow(rows, { minTemp = 12, maxTemp = 32, rainCap = 30, windCap = 28, span = 3, maxEndHour = 18 } = {}) {
   if (rows.length < span) return null;
   let best = null;
   for (let i = 0; i <= rows.length - span; i += 1) {
     const slice = rows.slice(i, i + span);
+    const endHour = Number((slice[slice.length - 1].time || "").slice(11, 13));
+    if (!Number.isFinite(endHour) || endHour > maxEndHour) continue;
     const rain = Math.max(...slice.map((r) => safeNum(r.precipitation_probability)));
     const wind = Math.max(...slice.map((r) => safeNum(r.wind_kmh)));
     const temp = slice.reduce((s, r) => s + safeNum(r.temperature_c), 0) / slice.length;
