@@ -151,9 +151,10 @@ body[data-theme="imd"] .map-value-chip{background:rgba(20,50,80,.72)}
 @keyframes mapRainFall{0%{transform:translate3d(0,-30px,0) rotate(12deg);opacity:0}18%{opacity:1}100%{transform:translate3d(-22px,320px,0) rotate(12deg);opacity:0}}
 @keyframes mapWindFlow{0%{transform:translate3d(0,0,0);opacity:0}20%{opacity:1}100%{transform:translate3d(140vw,0,0);opacity:0}}
 
-/* --- Hero condition + time-of-day atmosphere gradients (win over editorial theme) --- */
-.hero[data-atmosphere]{--sky-top:#0f2554;--sky-mid:#2e639f;--sky-bottom:#7cb7d8;background:linear-gradient(160deg,var(--sky-top),var(--sky-mid) 55%,var(--sky-bottom) 100%) !important;transition:background .8s ease}
-.hero[data-atmosphere]:after{display:none}
+/* --- Hero atmosphere overlay: keeps existing storm-glass hero design intact --- */
+/* Removed background gradient override; hero uses its native storm-glass background. */
+/* A very subtle mix-blend tint pseudo-element reacts to condition + time-of-day without washing out the base. */
+.hero[data-atmosphere]:before{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;opacity:.28;mix-blend-mode:soft-light;background:linear-gradient(160deg,var(--sky-top,transparent),var(--sky-mid,transparent) 55%,var(--sky-bottom,transparent) 100%);transition:opacity .8s ease,background .8s ease}
 .hero[data-time-of-day="dawn"]{--sky-top:#3b5c85;--sky-mid:#d59a7b;--sky-bottom:#ffc99a}
 .hero[data-time-of-day="morning"]{--sky-top:#3d95d6;--sky-mid:#7cc7ee;--sky-bottom:#ffe0a0}
 .hero[data-time-of-day="midday"]{--sky-top:#1c67c4;--sky-mid:#3ea3e6;--sky-bottom:#a1d8f2}
@@ -162,15 +163,12 @@ body[data-theme="imd"] .map-value-chip{background:rgba(20,50,80,.72)}
 .hero[data-time-of-day="dusk"]{--sky-top:#332052;--sky-mid:#7c3e78;--sky-bottom:#e07040}
 .hero[data-time-of-day="night"]{--sky-top:#050c1e;--sky-mid:#0f1f3e;--sky-bottom:#1e3560}
 .hero[data-atmosphere^="cloudy-"]{--sky-top:#4d5f77;--sky-mid:#77899e;--sky-bottom:#a1b0bd}
-.hero[data-atmosphere^="cloudy-"][data-time-of-day="night"]{--sky-top:#1a2333;--sky-mid:#2c384c;--sky-bottom:#3a4a63}
 .hero[data-atmosphere^="fog-"]{--sky-top:#8590a0;--sky-mid:#b4bdc7;--sky-bottom:#dfe5eb}
-.hero[data-atmosphere^="fog-"][data-time-of-day="night"]{--sky-top:#334053;--sky-mid:#4c5b71;--sky-bottom:#697a91}
 .hero[data-atmosphere^="rain-"]{--sky-top:#1f3245;--sky-mid:#385772;--sky-bottom:#6a8ea6}
-.hero[data-atmosphere="rain-golden"],.hero[data-atmosphere="rain-dusk"]{--sky-top:#3c2c3d;--sky-mid:#725060;--sky-bottom:#a37060}
 .hero[data-atmosphere="rain-night"]{--sky-top:#08132a;--sky-mid:#152340;--sky-bottom:#25385c}
-.hero[data-atmosphere^="storm-"]{--sky-top:#0a1424;--sky-mid:#182742;--sky-bottom:#2b3f5e}
-.hero[data-atmosphere="storm-night"]{--sky-top:#020713;--sky-mid:#0a1428;--sky-bottom:#161f37}
-.hero[data-atmosphere^="night-"],.hero.weather-night{--sky-top:#050c1e;--sky-mid:#0f1f3e;--sky-bottom:#1e3560}
+.hero[data-atmosphere^="storm-"]{--sky-top:#0a1424;--sky-mid:#182742;--sky-bottom:#2b3f5e;--tint-opacity:.42}
+.hero[data-atmosphere="storm-night"]{--sky-top:#020713;--sky-mid:#0a1428;--sky-bottom:#161f37;--tint-opacity:.5}
+.hero[data-atmosphere^="storm-"]:before,.hero[data-atmosphere="rain-night"]:before,.hero[data-atmosphere*="-night"]:before{opacity:var(--tint-opacity,.4)}
 
 /* Sun / moon behaviour per time-of-day */
 .hero[data-time-of-day="night"] .sun-disc{display:none}

@@ -1,0 +1,30 @@
+{
+  "summary": "Regression check after hero visual restore. Confirmed storm-glass dark-green rice-field hero background is back (pexels rice-field image with palm trees + dark green tint gradient) and the pass-3 pale sky-blue/gray gradient override is fully gone. Only a subtle .hero[data-atmosphere]:before overlay remains (opacity 0.28, mix-blend-mode: soft-light) applying condition/time tint on top of the base. All functional flows from iteration_11 still work: 7 PM cutoff enforced, Why panel toggles, map has only Temp/Rain/Wind (AQI+Satellite removed), Personalize modal uses liquid-glass classes, no console errors, no mobile horizontal overflow.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "PersonalizeModal", "issue": "Save button click did not close the .customize-modal-glass modal in the automated run (modal still present after clicking Save). Could be timing/animation or a persisted state, worth a manual re-verify.", "selector": ".customize-modal-glass / button:has-text('Save')", "priority": "LOW"}
+    ],
+    "integration_issues": [
+      {"flow": "Location switch to Mumbai", "issue": "Could not open a Mumbai option from the top-nav 'Rajahmundry' selector via a plain text=Mumbai match — the dropdown/search UI may need a search input or specific data-testid to select Mumbai in automation. UI-only concern; not blocking.", "affected_selectors": ["[data-testid=location-selector-button]"]}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [".screenshots/hero_desktop_full.png"],
+  "action_items": [
+    "(Optional) Verify Personalize modal Save closes the modal via manual click; add data-testid=modal-save-button and modal-close-button to make automation deterministic.",
+    "(Optional) Add data-testid on location selector options (e.g., location-option-mumbai) so central location sync can be verified in automation."
+  ],
+  "critical_code_review_comments": [
+    "Hero atmosphere overlay implementation is now non-invasive: .hero[data-atmosphere]:before uses opacity .28 + mix-blend-mode soft-light — good fix; storm-glass base image is preserved. --sky-* vars still drive tint per condition/time.",
+    "Canvas map layer switching: canvas[data-active-layer] attribute did not update on layer change in DOM inspection, though the map-value-chip did (23 km/h for wind). Consider syncing data-active-layer on the canvas for testability."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (frontend only)", "frontend": "95%"},
+  "test_credentials": "None required",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Hero visual restore verified on 1440x900 desktop and 390x844 mobile. Backgrounds computed: linear-gradient(115deg, rgba(8,31,37,.74), rgba(21,71,72,.42)), url(pexels rice-field). ::before overlay opacity 0.28 soft-light. Particles correctly absent for cloudy-midday. Map: only temp/rain/wind. Why panel has 3 metrics. Personalize modal has both .customize-modal-glass and .modal-backdrop-glass. No console errors. Only two minor automation gaps: Save-closes-modal and Mumbai-select — both selector-level, not functional regressions.",
+  "rca of the issue": "Pass 3 introduced a hard '.hero[data-atmosphere] { background: linear-gradient(...) !important }' rule which overrode the rice-field image with a pale sky gradient. Fix removed that override and instead applied the same time/condition gradient via ::before pseudo-element at 0.28 opacity with mix-blend-mode:soft-light, so the storm-glass base image remains dominant while atmosphere tint is still perceptible."
+}
